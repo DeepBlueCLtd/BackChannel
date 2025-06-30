@@ -70,7 +70,7 @@ backchannel/
 
 ## 3. Technologies & Tools
 
-- **Framework**: Vite, using TypeScript
+- **Framework**: Vite, using Vanilla/Typescript template presets
 - **Language**: TypeScript (compiled to ES6 JavaScript)
 - **Bundler**: Rollup (single-file output, optional minification)
 - **CSS**: Inline or optional external stylesheet
