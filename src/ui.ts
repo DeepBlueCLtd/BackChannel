@@ -66,7 +66,8 @@ export function renderSidebar(
   sidebar.appendChild(title)
 
   const buttonContainer = document.createElement('div')
-  buttonContainer.style.marginBottom = '10px'
+  buttonContainer.style.padding = '10px 0'
+  buttonContainer.style.borderTop = '1px solid #ccc'
 
   const provideFeedbackButton = document.createElement('button')
   provideFeedbackButton.id = 'backchannel-provide-feedback'
@@ -100,6 +101,7 @@ export function renderSidebar(
 
     comments.forEach(comment => {
       const listItem = document.createElement('li')
+      listItem.setAttribute('data-selector', comment.selector)
       listItem.style.padding = '8px'
       listItem.style.borderBottom = '1px solid #eee'
       listItem.style.cursor = 'pointer'

@@ -37,6 +37,14 @@ function getCssSelector(el: HTMLElement): string {
 }
 
 const COMMENTED_ELEMENT_CLASS = 'backchannel-commented-element'
+const SELECTED_ELEMENT_CLASS = 'backchannel-selected-element'
+
+export function clearSelectedHighlight() {
+  const selected = document.querySelector(`.${SELECTED_ELEMENT_CLASS}`)
+  if (selected) {
+    selected.classList.remove(SELECTED_ELEMENT_CLASS)
+  }
+}
 
 export function clearCommentHighlights() {
   document

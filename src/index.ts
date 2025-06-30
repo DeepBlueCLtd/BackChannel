@@ -6,7 +6,8 @@ export interface BackChannelConfig {
 import {
   handleElementClick,
   highlightCommentedElements,
-  clearCommentHighlights
+  clearCommentHighlights,
+  clearSelectedHighlight
 } from './dom'
 import { loadComments, saveComment, type CommentEntry } from './storage'
 import {
@@ -24,6 +25,7 @@ const BackChannel = {
     let isSelectModeActive = false
     let sidebarEl: HTMLElement | null = null
     let highlightedEl: HTMLElement | null = null
+    let selectedComment: CommentEntry | null = null
 
     const style = document.createElement('style')
     style.textContent = `
@@ -35,8 +37,18 @@ const BackChannel = {
         outline: 2px solid #ffc107 !important; /* Yellow outline for commented elements */
         cursor: pointer !important;
       }
+      .backchannel-selected-element {
+        outline: 3px solid #0056b3 !important; /* Darker blue for selection */
+        box-shadow: 0 0 10px rgba(0, 86, 179, 0.5);
+      }
+      .backchannel-sidebar-item-selected {
+        background-color: #e7f1ff !important; /* Light blue background for selected sidebar item */
+      }
     `
     document.head.appendChild(style)
+
+    const SELECTED_ELEMENT_CLASS = 'backchannel-selected-element'
+    const SELECTED_SIDEBAR_ITEM_CLASS = 'backchannel-sidebar-item-selected'
 
     function highlightElement(event: MouseEvent) {
       const target = event.target as HTMLElement
@@ -74,6 +86,7 @@ const BackChannel = {
     function exitSelectMode() {
       isSelectModeActive = false
       unhighlightElement()
+      clearSelectedHighlight()
       document.removeEventListener('mouseover', highlightElement)
       document.removeEventListener('mouseout', unhighlightElement)
       if (sidebarEl) {
@@ -89,10 +102,29 @@ const BackChannel = {
     }
 
     function onCommentClick(comment: CommentEntry) {
-      console.log('Sidebar comment clicked:', comment)
+      // If clicking the already selected comment, deselect it
+      if (selectedComment && selectedComment.selector === comment.selector) {
+        clearSelectedHighlight()
+        selectedComment = null
+        return
+      }
+
+      clearSelectedHighlight() // Clear previous selection
+      selectedComment = comment // Set new selection
+
+      // Highlight element on page
       const el = document.querySelector(comment.selector)
       if (el) {
+        el.classList.add(SELECTED_ELEMENT_CLASS)
         ;(el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+
+      // Highlight item in sidebar
+      const sidebarItem = document.querySelector(
+        `#backchannel-sidebar li[data-selector="${comment.selector}"]`
+      )
+      if (sidebarItem) {
+        sidebarItem.classList.add(SELECTED_SIDEBAR_ITEM_CLASS)
       }
     }
 
@@ -148,6 +180,7 @@ const BackChannel = {
           sidebarEl.style.display = 'none'
           exitSelectMode()
           clearCommentHighlights()
+          clearSelectedHighlight()
         } else {
           // Showing sidebar
           sidebarEl.style.display = 'block'
