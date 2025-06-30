@@ -37,9 +37,12 @@ test('BackChannel plugin integrates properly into a page', async ({ page }) => {
   const launchButton = await page.locator('#backchannel-launch-button');
   await expect(launchButton).toBeVisible();
   
+  // Verify the sidebar is not visible initially
+  const sidebar = await page.locator('#backchannel-sidebar');
+  await expect(sidebar).not.toBeVisible();
+  
   // Verify that clicking the launch button shows the sidebar
   await launchButton.click();
-  const sidebar = await page.locator('#backchannel-sidebar');
   await expect(sidebar).toBeVisible();
   
   // Test basic functionality - entering select mode
