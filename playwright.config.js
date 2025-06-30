@@ -1,4 +1,6 @@
 // @ts-check
+/* eslint-env node */
+/* global process */
 import { defineConfig, devices } from '@playwright/test';
 
 /**

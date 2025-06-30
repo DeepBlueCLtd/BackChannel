@@ -1,4 +1,6 @@
 // @ts-check
+/* eslint-env browser, node */
+/* global console */
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
