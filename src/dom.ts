@@ -1,4 +1,5 @@
 import { showCommentForm, type CommentFormData } from './ui'
+import type { CommentEntry } from './storage'
 
 function getElementLabel(element: HTMLElement): string {
   if (element.textContent) {
@@ -33,6 +34,32 @@ function getCssSelector(el: HTMLElement): string {
     el = el.parentNode as HTMLElement
   }
   return path.join(' > ')
+}
+
+const COMMENTED_ELEMENT_CLASS = 'backchannel-commented-element'
+
+export function clearCommentHighlights() {
+  document
+    .querySelectorAll(`.${COMMENTED_ELEMENT_CLASS}`)
+    .forEach(el => el.classList.remove(COMMENTED_ELEMENT_CLASS))
+}
+
+export function highlightCommentedElements(comments: CommentEntry[]) {
+  // Clear existing highlights first
+  document
+    .querySelectorAll(`.${COMMENTED_ELEMENT_CLASS}`)
+    .forEach(el => el.classList.remove(COMMENTED_ELEMENT_CLASS))
+
+  comments.forEach(comment => {
+    try {
+      const el = document.querySelector(comment.selector)
+      if (el) {
+        el.classList.add(COMMENTED_ELEMENT_CLASS)
+      }
+    } catch (e) {
+      console.warn(`Could not find element for selector: ${comment.selector}`, e)
+    }
+  })
 }
 
 export function handleElementClick(

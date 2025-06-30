@@ -3,9 +3,19 @@ export interface BackChannelConfig {
   storageKey: string
 }
 
-import { handleElementClick } from './dom'
+import {
+  handleElementClick,
+  highlightCommentedElements,
+  clearCommentHighlights
+} from './dom'
 import { loadComments, saveComment, type CommentEntry } from './storage'
-import { createLaunchButton, renderSidebar, type CommentFormData } from './ui'
+import {
+  createLaunchButton,
+  renderSidebar,
+  updateLaunchButton,
+  type CommentFormData
+} from './ui'
+import { exportCommentsToCSV } from './exporter'
 
 const BackChannel = {
   init: (config: BackChannelConfig) => {
@@ -20,6 +30,10 @@ const BackChannel = {
       .backchannel-highlight {
         outline: 2px dashed #007bff !important;
         cursor: crosshair !important;
+      }
+      .backchannel-commented-element {
+        outline: 2px solid #ffc107 !important; /* Yellow outline for commented elements */
+        cursor: pointer !important;
       }
     `
     document.head.appendChild(style)
@@ -82,6 +96,11 @@ const BackChannel = {
       }
     }
 
+    function onExportClick() {
+      const comments = loadComments(config.storageKey)
+      exportCommentsToCSV(comments)
+    }
+
     function onCommentSubmit(
       label: string,
       selector: string,
@@ -95,36 +114,54 @@ const BackChannel = {
         initials: data.initials
       }
       const allComments = saveComment(newComment, config.storageKey)
+      updateLaunchButton(allComments.length)
+      highlightCommentedElements(allComments)
+
       if (sidebarEl) sidebarEl.remove()
       sidebarEl = renderSidebar(
         allComments,
         onCommentClick,
         enterSelectMode,
-        exitSelectMode
+        exitSelectMode,
+        onExportClick
       )
       sidebarEl.style.display = 'block'
     }
 
-    function toggleSidebar() {
+        function toggleSidebar() {
+      // First time opening
       if (!sidebarEl) {
         const initialComments = loadComments(config.storageKey)
         sidebarEl = renderSidebar(
           initialComments,
           onCommentClick,
           enterSelectMode,
-          exitSelectMode
+          exitSelectMode,
+          onExportClick
         )
       }
+
       if (sidebarEl) {
         const isVisible = sidebarEl.style.display !== 'none'
-        sidebarEl.style.display = isVisible ? 'none' : 'block'
         if (isVisible) {
+          // Hiding sidebar
+          sidebarEl.style.display = 'none'
           exitSelectMode()
+          clearCommentHighlights()
+        } else {
+          // Showing sidebar
+          sidebarEl.style.display = 'block'
+          const comments = loadComments(config.storageKey)
+          highlightCommentedElements(comments)
         }
       }
     }
 
-    createLaunchButton(toggleSidebar)
+        createLaunchButton(toggleSidebar)
+
+    // Set initial comment count on launch button
+    const initialComments = loadComments(config.storageKey)
+    updateLaunchButton(initialComments.length)
 
     document.addEventListener('click', (event) => {
       if (isSelectModeActive) {

@@ -1,5 +1,16 @@
 import type { CommentEntry } from './storage'
 
+export function updateLaunchButton(count: number) {
+  const button = document.getElementById('backchannel-launch-button')
+  if (button) {
+    if (count > 0) {
+      button.textContent = `BC (${count})`
+    } else {
+      button.textContent = 'BC'
+    }
+  }
+}
+
 export function createLaunchButton(onClick: () => void) {
   const button = document.createElement('button')
   button.id = 'backchannel-launch-button'
@@ -26,7 +37,8 @@ export function renderSidebar(
   comments: CommentEntry[],
   onCommentClick: (entry: CommentEntry) => void,
   onProvideFeedbackClick: () => void,
-  onCancelClick: () => void
+  onCancelClick: () => void,
+  onExportClick: () => void
 ): HTMLElement {
   const existingSidebar = document.querySelector('#backchannel-sidebar')
   if (existingSidebar) {
@@ -61,6 +73,11 @@ export function renderSidebar(
   provideFeedbackButton.textContent = 'Provide Feedback'
   provideFeedbackButton.onclick = onProvideFeedbackClick
   buttonContainer.appendChild(provideFeedbackButton)
+
+  const exportButton = document.createElement('button')
+  exportButton.textContent = 'Export CSV'
+  exportButton.onclick = onExportClick
+  buttonContainer.appendChild(exportButton)
 
   const cancelButton = document.createElement('button')
   cancelButton.id = 'backchannel-cancel-select-mode'
