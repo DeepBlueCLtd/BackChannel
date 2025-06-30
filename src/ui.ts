@@ -1,9 +1,33 @@
 import type { CommentEntry } from './storage'
 
+export function createLaunchButton(onClick: () => void) {
+  const button = document.createElement('button')
+  button.id = 'backchannel-launch-button'
+  button.textContent = 'BC'
+  button.style.position = 'fixed'
+  button.style.top = '20px'
+  button.style.right = '20px'
+  button.style.width = '50px'
+  button.style.height = '50px'
+  button.style.borderRadius = '50%'
+  button.style.backgroundColor = '#007bff'
+  button.style.color = 'white'
+  button.style.border = 'none'
+  button.style.fontSize = '20px'
+  button.style.fontWeight = 'bold'
+  button.style.cursor = 'pointer'
+  button.style.zIndex = '10001'
+
+  button.onclick = onClick
+  document.body.appendChild(button)
+}
+
 export function renderSidebar(
   comments: CommentEntry[],
-  onCommentClick: (entry: CommentEntry) => void
-) {
+  onCommentClick: (entry: CommentEntry) => void,
+  onProvideFeedbackClick: () => void,
+  onCancelClick: () => void
+): HTMLElement {
   const existingSidebar = document.querySelector('#backchannel-sidebar')
   if (existingSidebar) {
     existingSidebar.remove()
@@ -21,12 +45,31 @@ export function renderSidebar(
   sidebar.style.padding = '10px'
   sidebar.style.zIndex = '9999'
   sidebar.style.overflowY = 'auto'
+  sidebar.style.display = 'none' // Hidden by default
   sidebar.style.boxSizing = 'border-box'
 
   const title = document.createElement('h3')
   title.textContent = 'Comments'
   title.style.marginTop = '0'
   sidebar.appendChild(title)
+
+  const buttonContainer = document.createElement('div')
+  buttonContainer.style.marginBottom = '10px'
+
+  const provideFeedbackButton = document.createElement('button')
+  provideFeedbackButton.id = 'backchannel-provide-feedback'
+  provideFeedbackButton.textContent = 'Provide Feedback'
+  provideFeedbackButton.onclick = onProvideFeedbackClick
+  buttonContainer.appendChild(provideFeedbackButton)
+
+  const cancelButton = document.createElement('button')
+  cancelButton.id = 'backchannel-cancel-select-mode'
+  cancelButton.textContent = 'Cancel'
+  cancelButton.onclick = onCancelClick
+  cancelButton.style.display = 'none' // Initially hidden
+  buttonContainer.appendChild(cancelButton)
+
+  sidebar.appendChild(buttonContainer)
 
   if (comments.length === 0) {
     const noComments = document.createElement('p')
@@ -60,10 +103,11 @@ export function renderSidebar(
       listItem.onclick = () => onCommentClick(comment)
       list.appendChild(listItem)
     })
-    sidebar.appendChild(list)
+        sidebar.appendChild(list)
   }
 
   document.body.appendChild(sidebar)
+  return sidebar
 }
 
 export interface CommentFormData {

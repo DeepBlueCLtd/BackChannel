@@ -1,3 +1,5 @@
+import { showCommentForm, type CommentFormData } from './ui'
+
 function getElementLabel(element: HTMLElement): string {
   if (element.textContent) {
     const text = element.textContent.trim().substring(0, 30)
@@ -10,9 +12,6 @@ function getElementLabel(element: HTMLElement): string {
   const index = allElements.indexOf(element)
   return `${element.tagName.toLowerCase()}[${index}]`
 }
-
-import { showCommentForm } from './ui'
-
 
 function getCssSelector(el: HTMLElement): string {
   const path = []
@@ -36,19 +35,22 @@ function getCssSelector(el: HTMLElement): string {
   return path.join(' > ')
 }
 
-import type { CommentFormData } from './ui'
-
 export function handleElementClick(
   event: MouseEvent,
   requireInitials: boolean,
-  onCommentSubmit: (label: string, selector: string, data: CommentFormData) => void
+  onCommentSubmit: (label: string, selector: string, data: CommentFormData) => void,
+  exitSelectMode: () => void
 ) {
   const clickedEl = event.target as HTMLElement
 
-  // Prevent clicks on the plugin's own UI
-  if (clickedEl.closest('#backchannel-comment-form, #backchannel-sidebar')) {
+  // Clicks are already filtered by the 'select mode' logic,
+  // but we do one last check to avoid commenting on the UI.
+  if (clickedEl.closest('#backchannel-comment-form, #backchannel-sidebar, #backchannel-launch-button')) {
     return
   }
+
+  // A valid element was clicked, so exit select mode.
+  exitSelectMode()
 
   const label = getElementLabel(clickedEl)
   const selector = getCssSelector(clickedEl)
