@@ -5,7 +5,7 @@ function getElementLabel(element: HTMLElement): string {
   if (element.textContent) {
     const text = element.textContent.trim().substring(0, 30)
     if (text) {
-      return `${element.tagName.toLowerCase()}: \'${text}...\''`
+      return `${element.tagName.toLowerCase()}: '${text}...'`
     }
   }
 
@@ -71,7 +71,9 @@ export function handleElementClick(
 
   // Clicks are already filtered by the 'select mode' logic,
   // but we do one last check to avoid commenting on the UI.
-  if (clickedEl.closest('#backchannel-comment-form, #backchannel-sidebar, #backchannel-launch-button')) {
+  if (
+    clickedEl.closest('#backchannel-comment-form, #backchannel-sidebar, #backchannel-launch-button')
+  ) {
     return
   }
 
@@ -81,7 +83,7 @@ export function handleElementClick(
   const label = getElementLabel(clickedEl)
   const selector = getCssSelector(clickedEl)
 
-  showCommentForm(clickedEl, requireInitials, (data) => {
+  showCommentForm(clickedEl, requireInitials, data => {
     onCommentSubmit(label, selector, data)
   })
 }

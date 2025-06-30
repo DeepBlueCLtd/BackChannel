@@ -101,7 +101,7 @@ export function renderSidebar(
 
     comments.forEach(comment => {
       const listItem = document.createElement('li')
-            listItem.setAttribute('data-timestamp', comment.timestamp)
+      listItem.setAttribute('data-timestamp', comment.timestamp)
       listItem.style.padding = '8px'
       listItem.style.borderBottom = '1px solid #eee'
       listItem.style.cursor = 'pointer'
@@ -115,14 +115,14 @@ export function renderSidebar(
       timestamp.textContent = new Date(comment.timestamp).toLocaleString()
       timestamp.style.fontSize = '0.8em'
       timestamp.style.color = '#666'
-      
+
       listItem.appendChild(label)
       listItem.appendChild(timestamp)
 
       listItem.onclick = () => onCommentClick(comment)
       list.appendChild(listItem)
     })
-        sidebar.appendChild(list)
+    sidebar.appendChild(list)
   }
 
   document.body.appendChild(sidebar)
@@ -209,11 +209,11 @@ export function showCommentForm(
   let offsetX = 0
   let offsetY = 0
 
-  header.onmousedown = (e) => {
+  header.onmousedown = e => {
     isDragging = true
     offsetX = e.clientX - form.offsetLeft
     offsetY = e.clientY - form.offsetTop
-    document.onmousemove = (e) => {
+    document.onmousemove = e => {
       if (isDragging) {
         form.style.left = `${e.clientX - offsetX}px`
         form.style.top = `${e.clientY - offsetY}px`
@@ -226,11 +226,11 @@ export function showCommentForm(
     }
   }
 
-  form.onsubmit = (event) => {
+  form.onsubmit = event => {
     event.preventDefault()
     const formData: CommentFormData = {
       comment: commentTextarea.value,
-      initials: initialsInput?.value
+      initials: initialsInput?.value,
     }
     onSubmit(formData)
     form.remove()

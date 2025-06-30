@@ -3,18 +3,9 @@ export interface BackChannelConfig {
   storageKey: string
 }
 
-import {
-  handleElementClick,
-  highlightCommentedElements,
-  clearCommentHighlights
-} from './dom'
+import { handleElementClick, highlightCommentedElements, clearCommentHighlights } from './dom'
 import { loadComments, saveComment, type CommentEntry } from './storage'
-import {
-  createLaunchButton,
-  renderSidebar,
-  updateLaunchButton,
-  type CommentFormData
-} from './ui'
+import { createLaunchButton, renderSidebar, updateLaunchButton, type CommentFormData } from './ui'
 import { exportCommentsToCSV } from './exporter'
 
 const BackChannel = {
@@ -54,9 +45,7 @@ const BackChannel = {
       if (selectedEl) {
         selectedEl.classList.remove(SELECTED_ELEMENT_CLASS)
       }
-      const selectedSidebarItem = document.querySelector(
-        `.${SELECTED_SIDEBAR_ITEM_CLASS}`
-      )
+      const selectedSidebarItem = document.querySelector(`.${SELECTED_SIDEBAR_ITEM_CLASS}`)
       if (selectedSidebarItem) {
         selectedSidebarItem.classList.remove(SELECTED_SIDEBAR_ITEM_CLASS)
       }
@@ -64,7 +53,12 @@ const BackChannel = {
 
     function highlightElement(event: MouseEvent) {
       const target = event.target as HTMLElement
-      if (target === highlightedEl || target.closest('#backchannel-comment-form, #backchannel-sidebar, #backchannel-launch-button')) {
+      if (
+        target === highlightedEl ||
+        target.closest(
+          '#backchannel-comment-form, #backchannel-sidebar, #backchannel-launch-button'
+        )
+      ) {
         return
       }
       unhighlightElement()
@@ -145,17 +139,13 @@ const BackChannel = {
       exportCommentsToCSV(comments)
     }
 
-    function onCommentSubmit(
-      label: string,
-      selector: string,
-      data: CommentFormData
-    ) {
+    function onCommentSubmit(label: string, selector: string, data: CommentFormData) {
       const newComment: CommentEntry = {
         label,
         selector,
         text: data.comment,
         timestamp: new Date().toISOString(),
-        initials: data.initials
+        initials: data.initials,
       }
       const allComments = saveComment(newComment, config.storageKey)
       updateLaunchButton(allComments.length)
@@ -172,7 +162,7 @@ const BackChannel = {
       sidebarEl.style.display = 'block'
     }
 
-        function toggleSidebar() {
+    function toggleSidebar() {
       // First time opening
       if (!sidebarEl) {
         const initialComments = loadComments(config.storageKey)
@@ -202,18 +192,18 @@ const BackChannel = {
       }
     }
 
-        createLaunchButton(toggleSidebar)
+    createLaunchButton(toggleSidebar)
 
     // Set initial comment count on launch button
     const initialComments = loadComments(config.storageKey)
     updateLaunchButton(initialComments.length)
 
-    document.addEventListener('click', (event) => {
+    document.addEventListener('click', event => {
       if (isSelectModeActive) {
         handleElementClick(event, config.requireInitials, onCommentSubmit, exitSelectMode)
       }
     })
-  }
+  },
 }
 
 export default BackChannel

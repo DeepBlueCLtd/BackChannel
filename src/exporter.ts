@@ -21,7 +21,7 @@ export function exportCommentsToCSV(comments: CommentEntry[]) {
       escapeCsvCell(comment.selector),
       escapeCsvCell(comment.text),
       escapeCsvCell(comment.timestamp),
-      escapeCsvCell(comment.initials)
+      escapeCsvCell(comment.initials),
     ].join(',')
   )
 

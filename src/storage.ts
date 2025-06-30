@@ -6,10 +6,7 @@ export interface CommentEntry {
   initials?: string
 }
 
-export function saveComment(
-  entry: CommentEntry,
-  storageKey: string
-): CommentEntry[] {
+export function saveComment(entry: CommentEntry, storageKey: string): CommentEntry[] {
   const allComments = loadComments(storageKey)
   const updatedComments = [...allComments, entry]
   localStorage.setItem(storageKey, JSON.stringify(updatedComments))
