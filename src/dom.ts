@@ -12,7 +12,7 @@ function getElementLabel(element: HTMLElement): string {
 }
 
 import { showCommentForm } from './ui'
-import { saveComment, type CommentEntry } from './storage'
+
 
 function getCssSelector(el: HTMLElement): string {
   const path = []
@@ -36,15 +36,17 @@ function getCssSelector(el: HTMLElement): string {
   return path.join(' > ')
 }
 
+import type { CommentFormData } from './ui'
+
 export function handleElementClick(
   event: MouseEvent,
-  targetSelector: string,
   requireInitials: boolean,
-  storageKey: string
+  onCommentSubmit: (label: string, selector: string, data: CommentFormData) => void
 ) {
   const clickedEl = event.target as HTMLElement
 
-  if (!clickedEl.matches(targetSelector)) {
+  // Prevent clicks on the plugin's own UI
+  if (clickedEl.closest('#backchannel-comment-form, #backchannel-sidebar')) {
     return
   }
 
@@ -52,14 +54,6 @@ export function handleElementClick(
   const selector = getCssSelector(clickedEl)
 
   showCommentForm(clickedEl, requireInitials, (data) => {
-    const newComment: CommentEntry = {
-      label,
-      selector,
-      text: data.comment,
-      timestamp: new Date().toISOString(),
-      initials: data.initials
-    }
-    const allComments = saveComment(newComment, storageKey)
-    console.log('Comment saved. All comments:', allComments)
+    onCommentSubmit(label, selector, data)
   })
 }

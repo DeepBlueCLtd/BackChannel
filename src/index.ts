@@ -1,32 +1,48 @@
-interface BackChannelConfig {
-  targetSelector: string
+export interface BackChannelConfig {
   requireInitials: boolean
   storageKey: string
 }
 
 import { handleElementClick } from './dom'
+import { loadComments, saveComment, type CommentEntry } from './storage'
+import { renderSidebar, type CommentFormData } from './ui'
 
 const BackChannel = {
   init: (config: BackChannelConfig) => {
     console.log('BackChannel initialized with config:', config)
 
-    // Inject CSS for hover affordance
-    const style = document.createElement('style')
-    style.textContent = `
-      ${config.targetSelector}:hover {
-        outline: 2px dashed #007bff;
-        cursor: pointer;
+    
+
+    function onCommentClick(comment: CommentEntry) {
+      console.log('Sidebar comment clicked:', comment)
+      const el = document.querySelector(comment.selector)
+      if (el) {
+        ;(el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
-    `
-    document.head.appendChild(style)
+    }
+
+    function onCommentSubmit(
+      label: string,
+      selector: string,
+      data: CommentFormData
+    ) {
+      const newComment: CommentEntry = {
+        label,
+        selector,
+        text: data.comment,
+        timestamp: new Date().toISOString(),
+        initials: data.initials
+      }
+      const allComments = saveComment(newComment, config.storageKey)
+      renderSidebar(allComments, onCommentClick)
+    }
+
+    // Load existing comments and render sidebar
+    const initialComments = loadComments(config.storageKey)
+    renderSidebar(initialComments, onCommentClick)
 
     document.addEventListener('click', (event) => {
-      handleElementClick(
-        event,
-        config.targetSelector,
-        config.requireInitials,
-        config.storageKey
-      )
+      handleElementClick(event, config.requireInitials, onCommentSubmit)
     })
   }
 }

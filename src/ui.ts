@@ -1,3 +1,71 @@
+import type { CommentEntry } from './storage'
+
+export function renderSidebar(
+  comments: CommentEntry[],
+  onCommentClick: (entry: CommentEntry) => void
+) {
+  const existingSidebar = document.querySelector('#backchannel-sidebar')
+  if (existingSidebar) {
+    existingSidebar.remove()
+  }
+
+  const sidebar = document.createElement('div')
+  sidebar.id = 'backchannel-sidebar'
+  sidebar.style.position = 'fixed'
+  sidebar.style.right = '0'
+  sidebar.style.top = '0'
+  sidebar.style.width = '300px'
+  sidebar.style.height = '100%'
+  sidebar.style.backgroundColor = '#f9f9f9'
+  sidebar.style.borderLeft = '1px solid #ccc'
+  sidebar.style.padding = '10px'
+  sidebar.style.zIndex = '9999'
+  sidebar.style.overflowY = 'auto'
+  sidebar.style.boxSizing = 'border-box'
+
+  const title = document.createElement('h3')
+  title.textContent = 'Comments'
+  title.style.marginTop = '0'
+  sidebar.appendChild(title)
+
+  if (comments.length === 0) {
+    const noComments = document.createElement('p')
+    noComments.textContent = 'No comments yet.'
+    sidebar.appendChild(noComments)
+  } else {
+    const list = document.createElement('ul')
+    list.style.listStyle = 'none'
+    list.style.padding = '0'
+    list.style.margin = '0'
+
+    comments.forEach(comment => {
+      const listItem = document.createElement('li')
+      listItem.style.padding = '8px'
+      listItem.style.borderBottom = '1px solid #eee'
+      listItem.style.cursor = 'pointer'
+
+      const label = document.createElement('div')
+      label.textContent = comment.label
+      label.style.fontWeight = 'bold'
+      label.style.marginBottom = '4px'
+
+      const timestamp = document.createElement('div')
+      timestamp.textContent = new Date(comment.timestamp).toLocaleString()
+      timestamp.style.fontSize = '0.8em'
+      timestamp.style.color = '#666'
+      
+      listItem.appendChild(label)
+      listItem.appendChild(timestamp)
+
+      listItem.onclick = () => onCommentClick(comment)
+      list.appendChild(listItem)
+    })
+    sidebar.appendChild(list)
+  }
+
+  document.body.appendChild(sidebar)
+}
+
 export interface CommentFormData {
   comment: string
   initials?: string
