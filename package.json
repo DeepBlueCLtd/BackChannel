@@ -11,9 +11,12 @@
     "lint": "eslint src --ext ts,tsx",
     "lint:fix": "eslint src --ext ts,tsx --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "playwright test",
+    "test:all": "yarn build-plugin && yarn test && yarn test:integration"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.1",
     "@types/node": "^24.0.7",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
@@ -21,6 +24,7 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-react": "^7.37.5",
+    "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
     "typescript": "~5.8.3",
     "vite": "^7.0.0",
