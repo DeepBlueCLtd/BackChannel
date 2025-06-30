@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 export default defineConfig({
   build: {
@@ -15,7 +16,7 @@ export default defineConfig({
     // Configure the library build
     lib: {
       // The entry point
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(dirname(fileURLToPath(import.meta.url)), 'src/index.ts'),
       
       // Output file name
       name: 'backchannel',
@@ -35,7 +36,7 @@ export default defineConfig({
         
         // Ensure exports are exposed as properties on the global variable
         extend: true,
-      }
-    }
-  }
+      },
+    },
+  },
 })

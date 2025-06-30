@@ -27,7 +27,25 @@ This project is set up with the following tools:
 
 - `yarn dev`: Start the development server
 - `yarn build`: Build the project for production
+- `yarn build-plugin`: Build the single-file JavaScript plugin for script tag usage
 - `yarn preview`: Preview the production build locally
+- `yarn test`: Run tests to verify the build output
 - `yarn lint`: Run ESLint to check for code issues
 - `yarn lint:fix`: Run ESLint and automatically fix issues when possible
 - `yarn format`: Format all source files using Prettier
+
+## Plugin Build Process
+
+BackChannel can be built as a single JavaScript file for easy integration into any web page. The build process creates a non-minified bundle with source maps that can be included via a script tag.
+
+```html
+<script src="path/to/backchannel.js"></script>
+<script>
+  BackChannel.init({
+    requireInitials: true,
+    storageKey: 'your-storage-key'
+  });
+</script>
+```
+
+For detailed information about the plugin build process, see [Plugin Build Guide](docs/plugin-build-guide.md).

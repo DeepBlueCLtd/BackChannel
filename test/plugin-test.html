@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BackChannel Plugin Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <h1>BackChannel Plugin Test</h1>
+  
+  <div class="test-section">
+    <h2>Plugin Initialization Test</h2>
+    <p>This test verifies that the BackChannel plugin loads correctly and can be initialized.</p>
+    <button id="test-init">Test Initialization</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Plugin Content</h2>
+    <p>This section contains elements that can be commented on using the BackChannel plugin.</p>
+    <div id="content">
+      <h3>Sample Header</h3>
+      <p>This is a paragraph that can be commented on.</p>
+      <ul>
+        <li>List item 1</li>
+        <li>List item 2</li>
+        <li>List item 3</li>
+      </ul>
+      <button>Sample Button</button>
+    </div>
+  </div>
+
+  <!-- Load the BackChannel plugin -->
+  <script src="../dist/backchannel.js"></script>
+  
+  <script>
+    document.getElementById('test-init').addEventListener('click', function() {
+      const statusEl = document.getElementById('status');
+      
+      try {
+        // Test if BackChannel is available
+        if (typeof BackChannel === 'undefined') {
+          throw new Error('BackChannel is not defined. Plugin failed to load properly.');
+        }
+        
+        // Test if init method exists
+        if (typeof BackChannel.init !== 'function') {
+          throw new Error('BackChannel.init is not a function. Plugin API is incorrect.');
+        }
+        
+        // Initialize the plugin
+        BackChannel.init({
+          requireInitials: true,
+          storageKey: 'backchannel-test-comments'
+        });
+        
+        statusEl.className = 'success';
+        statusEl.textContent = 'Success! BackChannel plugin loaded and initialized correctly.';
+      } catch (error) {
+        statusEl.className = 'error';
+        statusEl.textContent = 'Error: ' + error.message;
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>
