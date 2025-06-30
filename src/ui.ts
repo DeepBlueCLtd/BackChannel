@@ -19,8 +19,21 @@ export function showCommentForm(
   form.style.position = 'absolute'
   form.style.border = '1px solid #ccc'
   form.style.background = '#fff'
-  form.style.padding = '10px'
   form.style.zIndex = '10000'
+  form.style.resize = 'both'
+  form.style.overflow = 'hidden'
+
+  const header = document.createElement('div')
+  header.textContent = 'Add Comment'
+  header.style.padding = '8px 10px'
+  header.style.cursor = 'move'
+  header.style.backgroundColor = '#f1f1f1'
+  header.style.borderBottom = '1px solid #ccc'
+  form.appendChild(header)
+
+  const container = document.createElement('div')
+  container.style.padding = '10px'
+  form.appendChild(container)
 
   const rect = targetEl.getBoundingClientRect()
   form.style.top = `${window.scrollY + rect.bottom}px`
@@ -33,7 +46,7 @@ export function showCommentForm(
   commentTextarea.required = true
   commentLabel.append(commentTextarea)
 
-  form.appendChild(commentLabel)
+  container.appendChild(commentLabel)
 
   let initialsInput: HTMLInputElement | undefined
   if (requireInitials) {
@@ -44,7 +57,7 @@ export function showCommentForm(
     initialsInput.name = 'initials'
     initialsInput.required = true
     initialsLabel.append(initialsInput)
-    form.appendChild(initialsLabel)
+    container.appendChild(initialsLabel)
   }
 
   const submitButton = document.createElement('button')
@@ -58,7 +71,29 @@ export function showCommentForm(
 
   const buttonGroup = document.createElement('div')
   buttonGroup.append(submitButton, cancelButton)
-  form.appendChild(buttonGroup)
+  container.appendChild(buttonGroup)
+
+  // Make the form draggable
+  let isDragging = false
+  let offsetX = 0
+  let offsetY = 0
+
+  header.onmousedown = (e) => {
+    isDragging = true
+    offsetX = e.clientX - form.offsetLeft
+    offsetY = e.clientY - form.offsetTop
+    document.onmousemove = (e) => {
+      if (isDragging) {
+        form.style.left = `${e.clientX - offsetX}px`
+        form.style.top = `${e.clientY - offsetY}px`
+      }
+    }
+    document.onmouseup = () => {
+      isDragging = false
+      document.onmousemove = null
+      document.onmouseup = null
+    }
+  }
 
   form.onsubmit = (event) => {
     event.preventDefault()
