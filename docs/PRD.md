@@ -2,7 +2,7 @@
 
 ## 1. Product Overview
 
-**BackChannel** is a lightweight, offline-friendly JavaScript plugin that enables users to **capture**, **review**, and **resolve feedback** directly within static HTML content. Designed for disconnected or air-gapped environments, it provides structured comment workflows without relying on any network backend. Feedback is stored locally and exported as human-readable CSV files, which can be shared manually and imported into review sessions.
+**BackChannel** is a lightweight, offline-friendly JavaScript plugin that enables users to **capture**, **review**, and **resolve feedback** across one or more static HTML pages. Designed for disconnected or air-gapped environments, it provides structured comment workflows without relying on any network backend. Feedback is stored locally in the browser and exported as human-readable CSV files, which can be shared manually and imported for review.
 
 ---
 
@@ -10,6 +10,7 @@
 
 - Allow feedback to be added to unmodified static HTML content (Capture Mode)
 - Enable document authors to review, filter, and resolve feedback offline (Review Mode)
+- Group feedback across multiple pages into a document-wide “Feedback package”
 - Require no build process, backend, or network connectivity
 - Export and import feedback via CSV
 - Be simple to integrate and operate in legacy and secure environments
@@ -19,85 +20,107 @@
 ## 3. Key Features
 
 ### 3.1 Capture Mode (Feedback Entry)
-- Allow user to click on any DOM element to leave a comment
-- Record comment text, timestamp, and reviewer initials (if configured)
-- Visually mark elements with feedback
-- Display all comments in a toggleable sidebar
-- Store data in browser `localStorage`
-- Export all feedback as CSV
+- User selects any visible HTML element to leave a comment
+- Records comment text, timestamp, reviewer initials (if configured)
+- Visually marks elements with feedback
+- Displays feedback in a toggleable sidebar
+- Supports creating a multi-page **Feedback package**:
+  - User initiates the package on a “Welcome” or “Introduction” page
+  - Defines a URL prefix and document name
+  - Feedback added to any page under that prefix is grouped in the same package
+- Stores feedback in a browser IndexedDB instance, scoped to the document package
+- Exports feedback as CSV with required metadata
 
 ### 3.2 Review Mode (Feedback Review and Resolution)
-- Allow import of one or more CSV files containing feedback
-- Highlight and display comments from imported data
-- Indicate unresolved vs resolved feedback
-- Allow user to mark feedback as resolved and undo resolution
-- Filter by reviewer, timestamp, or resolution status
-- Export feedback (all or filtered) with a "resolved" status column
+- Allows importing one or more feedback CSVs
+- Supports **Document-wide review** and **Page-only view**
+- Displays and links feedback across multiple pages:
+  - Local page comments are highlighted and interactive
+  - Off-page comments are shown in the sidebar with page title + link
+- Enables filtering by reviewer, page, resolution status
+- Allows marking feedback as resolved / unresolved
+- Persists review status in local IndexedDB
+- Exports feedback including resolution state
 
 ---
 
-## 4. Non-Goals / Constraints
+## 4. Multi-Page Feedback Model
+
+- A Feedback package includes:
+  - A **document name** (default from `<title>` of the root page)
+  - A **URL prefix** (default from folder path of root page)
+  - A local IndexedDB instance containing a `comments` table
+- Each comment entry includes:
+  - Page URL
+  - Page title
+  - Document name
+  - Page label (optional override)
+  - Label for target element
+  - Text, timestamp, initials, resolved status
+
+---
+
+## 5. Non-Goals / Constraints
 
 - No live collaboration
 - No server storage or sync
 - No user authentication
-- No requirement to modify original HTML content
+- No required modification to original HTML content
 
 ---
 
-## 5. Target Users
+## 6. Target Users
 
 - End users reviewing HTML documents in secure/offline contexts (Capture Mode)
-- Document authors, trainers, or reviewers importing feedback (Review Mode)
-- Organizations using static documents in defense, enterprise, or training workflows
+- Document authors or editors reviewing submitted feedback (Review Mode)
+- Teams working on training material, documentation, or static knowledge bases
 
 ---
 
-## 6. Technical Requirements
+## 7. Technical Requirements
 
-- JavaScript plugin (UMD-style, plain script tag)
-- Self-contained with minimal/no external dependencies
-- Compatible with legacy HTML documents (no required markup)
-- No build step required for consumers
-- Operates entirely client-side
-- Must support modern browsers (Chrome, Edge, Firefox)
-
----
-
-## 7. Success Metrics
-
-- Drop-in use on legacy HTML files without modification
-- 100+ comments handled smoothly in both modes
-- CSV export/import round-trip fidelity is 100%
-- All interactions available offline
-- Can be operated by non-technical users with minimal guidance
+- JavaScript plugin (UMD-style, script tag usage)
+- Self-contained with no required dependencies
+- Compatible with legacy HTML documents
+- Fully functional offline, including multi-page persistence
+- Modern browser support (Chrome, Edge, Firefox)
 
 ---
 
-## 8. CSV Schema
+## 8. Success Metrics
 
-| Field     | Description                          |
-|-----------|--------------------------------------|
-| Label     | Readable description of target       |
-| Selector  | Fallback DOM selector                |
-| Text      | The comment text                     |
-| Timestamp | Date/time in ISO format              |
-| Initials  | Optional reviewer initials           |
-| Resolved  | true/false (only in review export)   |
+- Multi-page feedback supported across 5+ pages with full traceability
+- Sidebar performance acceptable with 100+ comments
+- CSV export/import round-trip preserves all metadata
+- Easily adoptable by teams working with static HTML
 
 ---
 
-## 9. Future Enhancements (Optional)
+## 9. CSV Schema
 
-- CSV import deduplication and versioning
-- Inline thread replies
-- Tag or category filters
-- Theming and CSS customization
-- Feedback import via QR code or signed file metadata
+| Field       | Description                            |
+|-------------|----------------------------------------|
+| Document    | Document name from feedback package     |
+| Page URL    | Full page URL                          |
+| Page Title  | Title tag or override                  |
+| Page Label  | Optional user-defined label            |
+| Element     | Label/selector of commented element    |
+| Text        | Comment content                        |
+| Timestamp   | ISO datetime of entry                  |
+| Initials    | Reviewer ID (if required)              |
+| Resolved    | true/false (for review state)          |
 
 ---
 
-## 10. Summary
+## 10. Future Enhancements (Optional)
 
-BackChannel provides a robust, privacy-respecting mechanism for capturing and reviewing feedback in disconnected environments. With support for both interactive feedback entry and offline CSV-based review workflows, it empowers static content authors to collaborate without connectivity.
+- Merge feedback from multiple reviewers in the same view
+- Allow assigning comments to sections or categories
+- Import/export full feedback package as JSON bundle
+- Synchronize review state across machines (manual or networked)
 
+---
+
+## 11. Summary
+
+BackChannel is designed for structured, document-wide feedback on static web content. It supports both feedback entry and review workflows across multiple pages — without requiring connectivity, build systems, or page modification. By using a lightweight local database and CSV-based exchange, it enables frictionless offline review for the disconnected web.
