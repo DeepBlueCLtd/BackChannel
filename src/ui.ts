@@ -101,7 +101,7 @@ export function renderSidebar(
 
     comments.forEach(comment => {
       const listItem = document.createElement('li')
-      listItem.setAttribute('data-selector', comment.selector)
+            listItem.setAttribute('data-timestamp', comment.timestamp)
       listItem.style.padding = '8px'
       listItem.style.borderBottom = '1px solid #eee'
       listItem.style.cursor = 'pointer'

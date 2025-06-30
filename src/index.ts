@@ -6,8 +6,7 @@ export interface BackChannelConfig {
 import {
   handleElementClick,
   highlightCommentedElements,
-  clearCommentHighlights,
-  clearSelectedHighlight
+  clearCommentHighlights
 } from './dom'
 import { loadComments, saveComment, type CommentEntry } from './storage'
 import {
@@ -49,6 +48,19 @@ const BackChannel = {
 
     const SELECTED_ELEMENT_CLASS = 'backchannel-selected-element'
     const SELECTED_SIDEBAR_ITEM_CLASS = 'backchannel-sidebar-item-selected'
+
+    function clearSelectedHighlight() {
+      const selectedEl = document.querySelector(`.${SELECTED_ELEMENT_CLASS}`)
+      if (selectedEl) {
+        selectedEl.classList.remove(SELECTED_ELEMENT_CLASS)
+      }
+      const selectedSidebarItem = document.querySelector(
+        `.${SELECTED_SIDEBAR_ITEM_CLASS}`
+      )
+      if (selectedSidebarItem) {
+        selectedSidebarItem.classList.remove(SELECTED_SIDEBAR_ITEM_CLASS)
+      }
+    }
 
     function highlightElement(event: MouseEvent) {
       const target = event.target as HTMLElement
@@ -121,7 +133,7 @@ const BackChannel = {
 
       // Highlight item in sidebar
       const sidebarItem = document.querySelector(
-        `#backchannel-sidebar li[data-selector="${comment.selector}"]`
+        `#backchannel-sidebar li[data-timestamp="${comment.timestamp}"]`
       )
       if (sidebarItem) {
         sidebarItem.classList.add(SELECTED_SIDEBAR_ITEM_CLASS)
