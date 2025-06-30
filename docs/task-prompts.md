@@ -53,6 +53,10 @@ Render a floating div near the element. The form should have:
 When submitted, call `onSubmit()` with the comment text and initials.
 
 Wire this into `handleElementClick()` so clicking a target shows the form.
+
+Extended UI Requirements:
+- the user should be given an `affordance` that informs them that it's possible to provide feedback on an element
+- the form should float above the page, and be re-positionable, so that the user can still read the content the feedback relates to.
 ```
 
 ---

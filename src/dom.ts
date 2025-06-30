@@ -11,7 +11,37 @@ function getElementLabel(element: HTMLElement): string {
   return `${element.tagName.toLowerCase()}[${index}]`
 }
 
-export function handleElementClick(event: MouseEvent, targetSelector: string) {
+import { showCommentForm } from './ui'
+import { saveComment, type CommentEntry } from './storage'
+
+function getCssSelector(el: HTMLElement): string {
+  const path = []
+  while (el.nodeType === Node.ELEMENT_NODE) {
+    let selector = el.nodeName.toLowerCase()
+    if (el.id) {
+      selector += '#' + el.id
+      path.unshift(selector)
+      break
+    } else {
+      let sib: Element | null = el
+      let nth = 1
+      while ((sib = sib.previousElementSibling)) {
+        if (sib.nodeName.toLowerCase() == selector) nth++
+      }
+      if (nth != 1) selector += `:nth-of-type(${nth})`
+    }
+    path.unshift(selector)
+    el = el.parentNode as HTMLElement
+  }
+  return path.join(' > ')
+}
+
+export function handleElementClick(
+  event: MouseEvent,
+  targetSelector: string,
+  requireInitials: boolean,
+  storageKey: string
+) {
   const clickedEl = event.target as HTMLElement
 
   if (!clickedEl.matches(targetSelector)) {
@@ -19,5 +49,17 @@ export function handleElementClick(event: MouseEvent, targetSelector: string) {
   }
 
   const label = getElementLabel(clickedEl)
-  console.log('Element clicked:', { element: clickedEl, label })
+  const selector = getCssSelector(clickedEl)
+
+  showCommentForm(clickedEl, requireInitials, (data) => {
+    const newComment: CommentEntry = {
+      label,
+      selector,
+      text: data.comment,
+      timestamp: new Date().toISOString(),
+      initials: data.initials
+    }
+    const allComments = saveComment(newComment, storageKey)
+    console.log('Comment saved. All comments:', allComments)
+  })
 }
