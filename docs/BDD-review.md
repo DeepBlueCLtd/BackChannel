@@ -1,127 +1,113 @@
-# Behaviour-Driven Test Specification: BackChannel (Review Mode)
+# Behaviour-Driven Test Specification: BackChannel – Review Mode (with Feedback Packages)
 
-This document defines BDD-style test scenarios covering the **Review Mode** of BackChannel, where a document author receives one or more feedback CSVs and uses the plugin to load, display, and manage feedback resolution.
-
----
-
-## Feature: CSV Import
-
-### Scenario: Load valid feedback CSV
-Given the document author has a CSV file of feedback  
-When the file is loaded via the "Import Feedback" button  
-Then each comment is parsed and anchored to the matching element  
-And all imported comments appear in the sidebar  
-And a success message is shown
-
-### Scenario: Load CSV with missing fields
-Given the CSV is missing one or more required columns  
-When the import is attempted  
-Then an error message is shown  
-And no feedback is imported
-
-### Scenario: Load malformed CSV file
-Given the file has invalid CSV syntax  
-When the file is loaded  
-Then the plugin should fail gracefully  
-And log a detailed error to console  
-And notify the user of the failure
-
-### Scenario: Load multiple CSVs sequentially
-Given two valid feedback CSVs  
-When they are loaded one after another  
-Then the comments are merged into a single review panel  
-And source metadata (filename or reviewer initials) is preserved
+This document defines the BDD test cases for the Review Mode of BackChannel, with support for loading and managing multi-page feedback.
 
 ---
 
-## Feature: Feedback Display
+## Feature: Importing Feedback
 
-### Scenario: Show all imported feedback
-When feedback is imported  
-Then the sidebar lists all feedback entries  
-And each entry includes label, text, timestamp, and reviewer (if provided)
+### Scenario: Load a CSV file with feedback for the current document
+Given the user opens Review Mode  
+And selects a valid CSV file  
+When the file is parsed  
+Then the comments are displayed in the sidebar  
+And the document name from the CSV is recorded in memory  
+And the plugin associates comments with the correct page URLs
 
-### Scenario: Highlight commented elements
-Given an element has associated feedback  
-When the document loads  
-Then a badge or marker is rendered beside the element
+### Scenario: Load multiple CSVs for the same document
+Given the user imports multiple CSV files with matching document names  
+When each file is parsed  
+Then all comments are merged in the view  
+And each comment retains its original page metadata
 
-### Scenario: Hover shows review summary
-When the reviewer hovers over a badge  
-Then a tooltip shows a truncated version of the comment
-
----
-
-## Feature: Filtering and Sorting
-
-### Scenario: Filter by reviewer initials
-Given feedback from multiple reviewers  
-When a reviewer filter is selected  
-Then only matching comments are shown in the sidebar
-
-### Scenario: Sort by timestamp
-When the user selects “Sort by Time”  
-Then comments are reordered chronologically in the sidebar
+### Scenario: Load a CSV with a different document name
+When the document name in the imported CSV differs from the current page’s feedback package  
+Then the plugin warns the user or isolates the comments in a separate session
 
 ---
 
-## Feature: Comment Resolution
+## Feature: Page-Based and Document-Wide Toggle
 
-### Scenario: Mark comment as resolved
-Given a feedback entry in the sidebar  
-When the reviewer clicks “Mark Resolved”  
-Then the entry is visually updated as resolved  
-And it is excluded from the default filter view
+### Scenario: View only current page comments
+Given comments from multiple pages are loaded  
+When the user selects “This Page Only”  
+Then the sidebar filters comments to the current page URL  
+And only local elements are highlighted
 
-### Scenario: Undo comment resolution
-When the reviewer clicks “Undo” on a resolved comment  
-Then the comment returns to active state  
-And is visible in the default comment list
-
-### Scenario: Filter to only unresolved
-Given some comments are resolved  
-When the reviewer enables the “Unresolved Only” toggle  
-Then only unresolved comments are shown
+### Scenario: View document-wide comments
+Given comments from multiple pages are loaded  
+When the user selects “Entire Document”  
+Then the sidebar lists comments from all pages  
+And each comment shows its page title and link  
+And only comments for the current page are highlighted
 
 ---
 
-## Feature: Export Review State
+## Feature: Feedback Resolution
 
-### Scenario: Export filtered feedback
-When a reviewer filters the list (e.g., unresolved only)  
-And clicks “Export View”  
-Then a CSV file is downloaded with only matching entries
+### Scenario: Mark a comment as resolved
+When the user clicks “Mark Resolved” on a comment  
+Then the comment’s status is updated in memory  
+And a visual indicator shows it as resolved  
+And the status will be included in the next CSV export
 
-### Scenario: Export with resolution status
-When the reviewer clicks “Export All”  
-Then the CSV includes a “resolved” column  
-Indicating which comments have been addressed
+### Scenario: Reopen a resolved comment
+Given a comment is marked as resolved  
+When the user clicks “Reopen”  
+Then the comment is marked as unresolved  
+And returns to active view
+
+---
+
+## Feature: Navigation and Linking
+
+### Scenario: Navigate to the page of a comment
+Given the sidebar shows an off-page comment  
+When the user clicks its link  
+Then the browser navigates to that comment’s page URL
+
+### Scenario: Comments on current page are linked to elements
+When the current page has matching feedback  
+Then the plugin attempts to highlight the commented element  
+And if not found, shows a “missing element” icon in the sidebar
+
+---
+
+## Feature: Export Reviewed Feedback
+
+### Scenario: Export current page comments
+When the user selects “Export This Page”  
+Then a CSV is generated with comments only from the current page  
+And includes their resolution state and metadata
+
+### Scenario: Export full document feedback
+When the user selects “Export Entire Document”  
+Then a CSV is generated with comments from all pages  
+And includes page URL, title, label, and resolution
 
 ---
 
 ## Feature: Error Handling
 
-### Scenario: Feedback element no longer exists
-Given a comment refers to an element that no longer exists in the DOM  
-When the feedback is loaded  
-Then a warning is shown in the sidebar  
-And the comment is still listed, marked as “orphaned”
+### Scenario: Malformed CSV file
+When the user tries to import a malformed CSV  
+Then the plugin displays an error  
+And no comments are imported
 
-### Scenario: Duplicate entries in imported CSV
-When multiple identical comments are loaded  
-Then only one is displayed unless deduplication is disabled
+### Scenario: Missing required metadata
+When a row is missing a required field (e.g., Page URL or Text)  
+Then the row is skipped  
+And a warning is shown or logged
 
 ---
 
-## Feature: Review State Persistence
+## Feature: UI and Sidebar
 
-### Scenario: Save review status locally
-When comments are resolved or filtered  
-Then the state is saved to localStorage  
-And restored when the page reloads
+### Scenario: Filter comments by resolution
+When the user toggles “Show Resolved”  
+Then resolved comments are included or excluded from the view accordingly
 
-### Scenario: Clear review data
-When the reviewer clicks “Reset Review”  
-Then all local state (resolutions, filters, feedback) is cleared  
-And the UI resets to initial import state
+### Scenario: Sort comments by page, timestamp, or status
+When the user selects a sort option  
+Then the sidebar reorders the visible comments
 

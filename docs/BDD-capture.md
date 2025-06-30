@@ -1,124 +1,104 @@
-# Behaviour-Driven Test Specification: BackChannel (Capture Mode)
+# Behaviour-Driven Test Specification: BackChannel – Capture Mode (with Feedback Packages)
 
-This document defines behaviour-driven test scenarios in pseudo-code to ensure high code coverage for the BackChannel plugin, taking into account that it must operate on legacy HTML content with **no modifications or special CSS classes**.
+This document defines the BDD test cases for the Capture Mode of BackChannel, including support for multi-page feedback via feedback packages.
 
 ---
 
-## Feature: Plugin Initialization
+## Feature: Feedback Package Initialization
 
-### Scenario: Successful initialization with auto-discovery
-Given a static HTML page with standard structural elements  
-When `BackChannel.init()` is called with no `targetSelector`  
-Then the plugin should allow the user to select arbitrary visible elements  
-And the “Add Feedback” button should appear  
-And no errors should be logged
+### Scenario: Create a new feedback package
+Given the user is on the welcome or introduction page  
+When the user clicks “Create Feedback Package”  
+Then a dialog appears showing the current folder-based URL stem  
+And a default document name from the page `<title>`  
+And the user can confirm or edit the name and URL prefix  
+And the system stores this package info in IndexedDB
 
-### Scenario: Initialization with valid config overrides
-When `BackChannel.init()` is called with a tag whitelist (e.g., `['h1', 'p']`)  
-Then only those tags should be interactive for feedback  
-And a visual indicator (e.g., hover highlight) should be enabled
-
-### Scenario: Initialization fails gracefully
-When the plugin is initialized in a browser with no DOM (edge case)  
-Then it should log an error but not crash  
-And the page should remain usable
+### Scenario: Feedback package already exists
+Given the current page URL matches an existing feedback package prefix  
+When the page loads  
+Then the plugin connects to the existing feedback package database  
+And all new comments will be associated with that package
 
 ---
 
 ## Feature: Adding Feedback
 
-### Scenario: User selects an element and adds a comment
-Given the user clicks on a visible paragraph element  
-When the feedback form appears and the comment is submitted  
-Then the comment is stored locally  
-And a badge or icon appears next to the element
+### Scenario: Add a comment to a valid element
+Given the user clicks on a visible DOM element  
+When the comment form appears and is submitted  
+Then the comment is saved to the IndexedDB `comments` table  
+And includes metadata: page URL, page title, document name, timestamp, etc.  
+And the element is visually marked with a feedback badge  
+And the comment appears in the sidebar
 
-### Scenario: Feedback on multiple elements
-Given the user clicks on multiple elements and submits feedback  
-Then each comment should be linked to its respective DOM element  
-And shown correctly in the sidebar
+### Scenario: Add feedback to another page in the same package
+Given a feedback package has already been created  
+And the user navigates to another page whose URL starts with the same prefix  
+When the user adds a comment  
+Then the comment is added to the same feedback package in IndexedDB
 
-### Scenario: Selecting a non-interactive element
-When the user clicks an element that is excluded (e.g., `<script>`)  
-Then no feedback form should appear  
-And the click should be ignored
-
----
-
-## Feature: Storage and Persistence
-
-### Scenario: Comments persist across page reloads
-Given one or more comments are submitted  
-When the page is reloaded  
-Then the same comments reappear in the sidebar  
-And the elements are still marked
-
-### Scenario: Comments are scoped to URL or doc ID
-Given comments are submitted on one HTML page  
-When another HTML page is opened  
-Then no feedback should carry over unless sharing the same `storageKey`
+### Scenario: Attempt to add feedback without a package
+Given no feedback package is active  
+When the user tries to add a comment  
+Then the system shows a warning prompting the user to create a feedback package first
 
 ---
 
-## Feature: Export
+## Feature: Local Storage and Persistence
 
-### Scenario: Export to CSV with legacy DOM references
-Given comments have been added to untagged elements  
-When the user exports to CSV  
-Then each row includes a readable label (e.g., element type and text preview)  
-And the CSV can be opened in Excel
+### Scenario: Feedback persists across page reload
+Given the user has added comments to a page in a package  
+When the page reloads  
+Then the same comments are shown in the sidebar  
+And previously commented elements are marked
 
-### Scenario: Export with no comments
-When no comments are stored  
-Then export should still trigger a CSV download with only header rows
-
----
-
-## Feature: Config Options
-
-### Scenario: Custom label function
-Given a custom label generator is supplied in the init config  
-When a comment is saved  
-Then the label in the CSV and UI uses the custom format
+### Scenario: Comments are isolated to their feedback package
+Given two feedback packages exist with different URL prefixes  
+When the user navigates between them  
+Then only the comments associated with the current package and page are shown
 
 ---
 
-## Feature: UI/UX
+## Feature: CSV Export
 
-### Scenario: Sidebar toggle
-When the user toggles the sidebar open/closed  
-Then the layout should adapt without affecting page content
+### Scenario: Export current page feedback
+When the user clicks “Export Feedback”  
+Then a CSV is downloaded containing only comments from the current page  
+And each comment row includes: document name, page title, page URL, element label, text, timestamp, initials
 
-### Scenario: Tooltip on hover
-Given a commented element is present  
-When the user hovers over the element  
-Then a tooltip shows the first line of the comment
-
----
-
-## Error Handling
-
-### Scenario: localStorage fails
-Given storage is unavailable  
-When the user submits a comment  
-Then an error message should appear  
-And the data is not saved
-
-### Scenario: Invalid CSV export state
-When the export function fails due to malformed data  
-Then a user-visible error is shown  
-And no corrupted file is downloaded
+### Scenario: Export document-wide feedback (optional)
+When the user selects “Export Entire Document”  
+Then the CSV includes comments from all pages under the same feedback package  
+And each row includes metadata to identify its page
 
 ---
 
-## Edge Cases
+## Feature: Error Handling
 
-### Scenario: Feedback on elements with no text content
-When the user comments on an image or icon-only element  
-Then the label should fall back to tag name and index  
-And the UI should still show the comment in the sidebar
+### Scenario: IndexedDB unavailable
+Given browser storage is blocked or fails  
+When the user tries to create a feedback package or add a comment  
+Then an error message is shown  
+And the action is aborted safely
 
-### Scenario: Multiple comments on one element
-Given a user submits two comments on the same paragraph  
-Then both comments are shown in thread format under the same anchor
+### Scenario: Invalid package name or URL prefix
+When the user enters invalid input in the “Create Feedback Package” dialog  
+Then the system prevents confirmation  
+And highlights the invalid fields
+
+---
+
+## Feature: Sidebar and UI
+
+### Scenario: Sidebar shows current page comments
+When the sidebar is opened  
+Then it lists all comments for the current page  
+With label, initials (if configured), and timestamp
+
+### Scenario: Comment on this page vs other pages
+Given multiple comments exist across multiple pages  
+When the user views the sidebar in Capture Mode  
+Then only comments for the current page are shown  
+And the comment count reflects only the visible page
 
