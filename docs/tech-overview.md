@@ -70,10 +70,11 @@ backchannel/
 
 ## 3. Technologies & Tools
 
+- **Framework**: Vite, using TypeScript
 - **Language**: TypeScript (compiled to ES6 JavaScript)
 - **Bundler**: Rollup (single-file output, optional minification)
 - **CSS**: Inline or optional external stylesheet
-- **Testing**: Manual + Jest for utility units
+- **Testing**: Manual + Jest for utility units.  StoryBook V9 for UI reviews and testing, using a sample document.
 - **Linting**: ESLint + Prettier
 
 ---
