@@ -20,7 +20,13 @@
     
     <div class="section">
       <h2>Database Initialization</h2>
-      <button id="init-db">Initialize Database</button>
+      <div>
+        <label for="db-name">Database Name:</label>
+        <input type="text" id="db-name" value="Test Document">
+      </div>
+      <div style="margin-top: 15px;">
+        <button id="init-db">Initialize Database</button>
+      </div>
       <div class="result" id="init-result"></div>
     </div>
     
@@ -116,15 +122,16 @@
     // Initialize database
     document.getElementById('init-db').addEventListener('click', async () => {
       try {
-        db = new DatabaseService('Test Document');
-        console.log('BC: about to init')
+        const dbName = document.getElementById('db-name').value || 'Test Document';
+        db = new DatabaseService(dbName);
+        console.log(`BC: about to init database: ${dbName}`)
         const success = await db.init();
         console.log('BC: init complete')
         
         const resultElement = document.getElementById('init-result');
         resultElement.textContent = success 
-          ? 'Database initialized successfully' 
-          : 'Database initialization failed';
+          ? `Database '${dbName}' initialized successfully` 
+          : `Database '${dbName}' initialization failed`;
         resultElement.className = success ? 'result success' : 'result error';
       } catch (error) {
         const resultElement = document.getElementById('init-result');
