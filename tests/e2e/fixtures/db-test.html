@@ -125,8 +125,8 @@
     import { DatabaseService } from '../../../src/services/db.js';
     
     /**
-     * Checks if there is an active feedback package for the current URL
-     * @param currentUrl The URL to check for an active feedback package
+     * Gets the active feedback package for the current URL
+     * @param {string} currentUrl - The current URL to check for a matching package
      * @returns Promise resolving to the matching package or null if none found
      */
     async function getActiveFeedbackPackage(currentUrl) {
@@ -151,9 +151,13 @@
           try {
             console.log(`Processing database: ${dbInfo.name}`);
             
+            // Extract the sanitized name without the prefix for DatabaseService
+            // This is important because DatabaseService will add the prefix again
+            const dbNameWithoutPrefix = dbInfo.name.replace('bc-storage-', '');
+            
             // Open the database
-            const dbService = new DatabaseService(dbInfo.name);
-            console.log('Database service created, initializing...');
+            const dbService = new DatabaseService(dbNameWithoutPrefix);
+            console.log(`Database service created with name: ${dbNameWithoutPrefix}, full name: ${dbService.dbName}`);
             const initResult = await dbService.init();
             console.log(`Database initialization result: ${initResult}`);
             
@@ -162,27 +166,45 @@
               continue;
             }
             
-            // Get the package from this database
-            console.log(`Getting packages from database ${dbInfo.name}...`);
-            const packages = await getAllPackagesWithCursor(dbService);
-            console.log(`Retrieved packages from ${dbInfo.name}:`, packages);
+            // Try to get the package directly first
+            console.log(`Trying to get package from database ${dbInfo.name} directly...`);
+            // For test packages, try to get by ID based on the database name
+            const packageId = dbNameWithoutPrefix;
+            const directPackage = await dbService.getPackage(packageId);
             
-            if (packages && packages.length > 0) {
-              // Each database should only have one package
-              const pkg = packages[0];
-              console.log(`Checking package in ${dbInfo.name}:`, pkg);
-              console.log(`Package rootURL: ${pkg.rootURL}, Current URL: ${currentUrl}`);
-              console.log(`URL contains rootURL: ${currentUrl.includes(pkg.rootURL)}`);
+            if (directPackage) {
+              console.log(`Direct package retrieval successful:`, directPackage);
               
               // Check if the package's root URL is contained within the current URL
-              if (pkg.rootURL && currentUrl.includes(pkg.rootURL)) {
-                console.log(`Found matching package: ${pkg.name} with rootURL: ${pkg.rootURL}`);
-                return pkg;
+              if (directPackage.rootURL && currentUrl.includes(directPackage.rootURL)) {
+                console.log(`Found matching package: ${directPackage.name} with rootURL: ${directPackage.rootURL}`);
+                return directPackage;
               } else {
-                console.log(`No match for package ${pkg.name} with rootURL ${pkg.rootURL}`);
+                console.log(`No match for package ${directPackage.name} with rootURL ${directPackage.rootURL}`);
               }
             } else {
-              console.log(`No packages found in database ${dbInfo.name}`);
+              // Fallback to cursor-based retrieval
+              console.log(`Direct package retrieval failed, trying cursor for ${dbInfo.name}...`);
+              const packages = await getAllPackagesWithCursor(dbService);
+              console.log(`Retrieved packages from ${dbInfo.name} via cursor:`, packages);
+              
+              if (packages && packages.length > 0) {
+                // Each database should only have one package
+                const pkg = packages[0];
+                console.log(`Checking package in ${dbInfo.name}:`, pkg);
+                console.log(`Package rootURL: ${pkg.rootURL}, Current URL: ${currentUrl}`);
+                console.log(`URL contains rootURL: ${currentUrl.includes(pkg.rootURL)}`);
+                
+                // Check if the package's root URL is contained within the current URL
+                if (pkg.rootURL && currentUrl.includes(pkg.rootURL)) {
+                  console.log(`Found matching package: ${pkg.name} with rootURL: ${pkg.rootURL}`);
+                  return pkg;
+                } else {
+                  console.log(`No match for package ${pkg.name} with rootURL ${pkg.rootURL}`);
+                }
+              } else {
+                console.log(`No packages found in database ${dbInfo.name}`);
+              }
             }
           } catch (dbError) {
             console.error(`Error processing database ${dbInfo.name}:`, dbError);
@@ -207,17 +229,36 @@
     async function getAllPackagesWithCursor(dbService) {
       return new Promise((resolve, reject) => {
         try {
+          console.log('Starting getAllPackagesWithCursor...');
+          console.log('Database object:', dbService.db);
+          console.log('Database name:', dbService.dbName);
+          console.log('Object store names:', dbService.db.objectStoreNames);
+          
           const packages = [];
           const transaction = dbService.db.transaction(['packages'], 'readonly');
+          console.log('Transaction created:', transaction);
+          
           const store = transaction.objectStore('packages');
+          console.log('Object store retrieved:', store);
+          
+          // Try to get all records first to see what's in the store
+          const getAllRequest = store.getAll();
+          getAllRequest.onsuccess = () => {
+            console.log('getAll result:', getAllRequest.result);
+          };
+          
           const request = store.openCursor();
+          console.log('Cursor request created');
 
           request.onsuccess = (event) => {
             const cursor = event.target.result;
+            console.log('Cursor result:', cursor);
             if (cursor) {
+              console.log('Found item in cursor:', cursor.value);
               packages.push(cursor.value);
               cursor.continue();
             } else {
+              console.log('No more items in cursor, returning packages:', packages);
               resolve(packages);
             }
           };
@@ -230,6 +271,8 @@
           transaction.oncomplete = () => {
             if (packages.length === 0) {
               console.log('No packages found in database');
+            } else {
+              console.log(`Found ${packages.length} packages in database`);
             }
           };
         } catch (error) {
@@ -601,34 +644,86 @@
       }
     ];
     
+    /**
+     * Clear only test package databases (those with test package IDs)
+     */
+    async function clearTestPackages() {
+      try {
+        const databases = await indexedDB.databases();
+        const promises = [];
+        
+        for (const dbInfo of databases) {
+          // Only delete databases that match our test package IDs
+          if (testPackages.some(pkg => dbInfo.name.includes(pkg.id))) {
+            promises.push(new Promise((resolve) => {
+              const request = indexedDB.deleteDatabase(dbInfo.name);
+              request.onsuccess = () => {
+                console.log(`Successfully deleted test database: ${dbInfo.name}`);
+                resolve();
+              };
+              request.onerror = () => {
+                console.error(`Error deleting test database: ${dbInfo.name}`);
+                resolve();
+              };
+            }));
+          }
+        }
+        
+        await Promise.all(promises);
+        return true;
+      } catch (error) {
+        console.error('Error clearing test databases:', error);
+        return false;
+      }
+    }
+    
     // Setup test packages - creating a separate database for each package
     document.getElementById('setup-test-packages').addEventListener('click', async () => {
       try {
         const resultElement = document.getElementById('active-package-result');
         let successCount = 0;
         
+        // First clear any existing test databases
+        await clearTestPackages();
+        
         // Create a separate database for each test package
         for (const packageData of testPackages) {
           // Create a unique database name with the bc-storage- prefix
-          // Note: packageData.id already contains the prefix, so don't add it again
-          const dbName = packageData.id.startsWith('bc-storage-') ? packageData.id : `bc-storage-${packageData.id}`;
+          // IMPORTANT: Do not include the prefix in the database name, as DatabaseService will add it
+          const dbName = packageData.id;
           
           // Create a new database instance for this package
-          const packageDb = new DatabaseService(dbName);
+          // Important: We need to clone the package data and ensure it has the correct ID
+          const packageDataWithId = {
+            ...packageData,
+            id: packageData.id // Ensure the ID is set correctly
+          };
           
-          // Initialize the database
+          console.log(`Creating database for package: ${JSON.stringify(packageDataWithId)}`);
+          
+          // Create a new database instance for this package and pass the package data directly
+          const packageDb = new DatabaseService(dbName, packageDataWithId);
+          console.log(`Database name will be: ${packageDb.dbName}`);
+          
+          // Initialize the database with the package data
           const initSuccess = await packageDb.init();
           
           if (initSuccess) {
-            // Add the package to its own database
-            const result = await packageDb.addPackage(packageData);
-            if (result) {
-              successCount++;
-              console.log(`Created database '${dbName}' with package '${packageData.name}'`);
+            successCount++;
+            console.log(`Created database '${dbName}' with package '${packageData.name}'`);
+            
+            // Verify the package was actually stored by retrieving it
+            const verifyPackage = await packageDb.getPackage(packageData.id);
+            console.log(`Verification - Retrieved package from ${dbName}:`, verifyPackage);
+            
+            // If verification failed, try to add the package explicitly
+            if (!verifyPackage) {
+              console.log(`Package verification failed, attempting to add package explicitly`);
+              await packageDb.addPackage(packageDataWithId);
               
-              // Verify the package was actually stored by retrieving it
-              const verifyPackage = await packageDb.getPackage(packageData.id);
-              console.log(`Verification - Retrieved package from ${dbName}:`, verifyPackage);
+              // Verify again
+              const reverifyPackage = await packageDb.getPackage(packageData.id);
+              console.log(`Re-verification - Retrieved package from ${dbName}:`, reverifyPackage);
             }
           }
         }

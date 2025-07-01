@@ -155,7 +155,7 @@ class DatabaseService {
   // ========== Package Store Methods ==========
 
   /**
-   * Adds a new package to the store
+   * Adds a new package to the store if the store is empty
    * @param {Object} packageData - Package data to add
    * @param {string} packageData.id - Unique identifier
    * @param {string} packageData.name - Package name
@@ -170,6 +170,13 @@ class DatabaseService {
     }
 
     try {
+      // First check if any packages already exist
+      const hasPackages = await this._checkPackagesExist();
+      if (hasPackages) {
+        console.warn('Cannot add new package: database already has a package. Use updatePackage instead.');
+        return null;
+      }
+
       return new Promise((resolve) => {
         const transaction = this.db.transaction(['packages'], 'readwrite');
         const store = transaction.objectStore('packages');
