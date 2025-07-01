@@ -44,7 +44,7 @@ class DatabaseService {
   }
 
   /**
-   * Initializes the database connection
+   * Initializes the database connection and optionally adds initial package data
    * @returns {Promise<boolean>} - Whether initialization was successful
    */
   async init() {
@@ -54,7 +54,7 @@ class DatabaseService {
     }
 
     try {
-      return new Promise((resolve) => {
+      const initResult = await new Promise((resolve) => {
         const request = window.indexedDB.open(this.dbName, this.dbVersion);
 
         request.onerror = (event) => {
@@ -70,6 +70,16 @@ class DatabaseService {
             const packagesStore = db.createObjectStore('packages', { keyPath: 'id' });
             packagesStore.createIndex('name', 'name', { unique: false });
             packagesStore.createIndex('version', 'version', { unique: false });
+            
+            // If we have initial package data, add it during database creation
+            if (this.initialPackageData) {
+              try {
+                packagesStore.add(this.initialPackageData);
+                console.log(`Added initial package ${this.initialPackageData.id} during database creation`);
+              } catch (err) {
+                console.error('Error adding initial package data:', err);
+              }
+            }
           }
 
           // Create comments store
@@ -84,8 +94,50 @@ class DatabaseService {
           resolve(true);
         };
       });
+      
+      // If we have initial package data but the database already existed (no upgrade needed)
+      // we need to check if the packages store is empty and add the package if it is
+      if (initResult && this.initialPackageData && this.db) {
+        const hasPackages = await this._checkPackagesExist();
+        if (!hasPackages) {
+          await this.addPackage(this.initialPackageData);
+        }
+      }
+      
+      return initResult;
     } catch (error) {
       console.error('Error initializing database:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Checks if any packages exist in the database
+   * @returns {Promise<boolean>} - Whether any packages exist
+   * @private
+   */
+  async _checkPackagesExist() {
+    if (!this.db) {
+      return false;
+    }
+    
+    try {
+      return new Promise((resolve) => {
+        const transaction = this.db.transaction(['packages'], 'readonly');
+        const store = transaction.objectStore('packages');
+        const countRequest = store.count();
+        
+        countRequest.onsuccess = () => {
+          resolve(countRequest.result > 0);
+        };
+        
+        countRequest.onerror = () => {
+          console.error('Error checking if packages exist');
+          resolve(false);
+        };
+      });
+    } catch (error) {
+      console.error('Error in _checkPackagesExist:', error);
       return false;
     }
   }

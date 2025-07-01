@@ -17,7 +17,7 @@ const mockPackages: Record<string, PackageData[]> = {
       name: 'Other Site',
       author: 'Test User',
       version: '1.0.0',
-      description: 'Other test site'
+      description: 'Other test site',
     },
     {
       id: 'example-site',
@@ -35,7 +35,7 @@ const mockPackages: Record<string, PackageData[]> = {
       name: 'Other Site',
       author: 'Test User',
       version: '1.0.0',
-      description: 'Other test site'
+      description: 'Other test site',
     },
     {
       id: 'another-site',
@@ -81,7 +81,7 @@ describe('packageService', () => {
     // Mock indexedDB global in the test environment
     Object.defineProperty(window, 'indexedDB', {
       value: mockIndexedDB,
-      writable: true
+      writable: true,
     })
   })
 
