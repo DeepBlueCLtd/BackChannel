@@ -9,12 +9,14 @@ class DatabaseService {
   /**
    * Constructor for DatabaseService
    * @param {string} documentTitle - Title of the document for database naming
+   * @param {Object} [packageData] - Optional package data to initialize with
    */
-  constructor(documentTitle) {
+  constructor(documentTitle, packageData = null) {
     this.dbName = `bc-storage-${this._sanitizeDbName(documentTitle || 'default')}`;
     this.dbVersion = 1;
     this.db = null;
     this.isSupported = this._checkSupport();
+    this.initialPackageData = packageData;
   }
 
   /**

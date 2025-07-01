@@ -2,42 +2,43 @@
  * Package Service - Functions for managing feedback packages
  */
 
-import type { FeedbackPackage } from '../types'
-import { DatabaseService } from './db.js'
+/* global indexedDB */
+
+/**
+ * Package data interface
+ */
+export interface PackageData {
+  id: string
+  name: string
+  version: string
+  author: string
+  description: string
+  rootURL: string
+}
 
 /**
  * Checks if there is an active feedback package for the current URL
  * @param currentUrl The URL to check for an active feedback package
  * @returns Promise resolving to the matching package or null if none found
  */
-export async function getActiveFeedbackPackage(
-  currentUrl: string
-): Promise<FeedbackPackage | null> {
+export async function getActiveFeedbackPackage(currentUrl: string): Promise<PackageData | null> {
   try {
-    const dbService = await getDbService()
-    if (!dbService) {
+    // Get all database names from IndexedDB
+    const dbNames = await getAllDatabaseNames()
+    // Filter database names to only include those with our prefix
+    const feedbackDbNames = dbNames.filter(name => name.startsWith('bc-storage-'))
+    // If no feedback databases found
+    if (feedbackDbNames.length === 0) {
       return null
     }
-
-    // Since there's no direct method to get all packages, we need to use a cursor
-    // to iterate through all packages in the store
-    const packages = await getAllPackagesWithCursor(dbService)
-
-    // If no packages or error retrieving packages
-    if (!packages || packages.length === 0) {
-      return null
-    }
-
-    // Loop through packages to find a match
-    for (const pkg of packages) {
-      // Check if the package's root URL is contained within the current URL
-      if (currentUrl.includes(pkg.rootURL)) {
-        // Return the first matching package
-        return pkg
+    // Check each database for a matching package
+    for (const dbName of feedbackDbNames) {
+      const packageData = await getPackageFromDatabase(dbName, currentUrl)
+      if (packageData) {
+        return packageData
       }
     }
-
-    // No matching package found
+    // No matching package found in any database
     return null
   } catch (error) {
     console.error('Error checking for active feedback package:', error)
@@ -46,72 +47,95 @@ export async function getActiveFeedbackPackage(
 }
 
 /**
- * Gets all packages from the database using a cursor
- * @param dbService The database service instance
- * @returns Promise resolving to an array of feedback packages or null on error
+ * Gets all database names from IndexedDB
+ * @returns Promise resolving to an array of database names
  */
-async function getAllPackagesWithCursor(
-  dbService: DatabaseService
-): Promise<FeedbackPackage[] | null> {
-  // We need to access the db property dynamically since it's not in the TypeScript type
-  const db = (dbService as any).db
-  if (!dbService || !db) {
-    return null
-  }
-
-  try {
-    return new Promise(resolve => {
-      const packages: FeedbackPackage[] = []
-      const transaction = db.transaction(['packages'], 'readonly')
-      const store = transaction.objectStore('packages')
-      const request = store.openCursor()
-
-      request.onsuccess = (event: any) => {
-        const cursor = event.target.result
-        if (cursor) {
-          packages.push(cursor.value)
-          cursor.continue()
-        } else {
-          // No more entries
-          resolve(packages)
-        }
+async function getAllDatabaseNames(): Promise<string[]> {
+  return new Promise(resolve => {
+    try {
+      // Check if indexedDB.databases() is supported
+      if ('databases' in indexedDB) {
+        // Modern browsers support indexedDB.databases()
+        indexedDB
+          .databases()
+          .then(dbs => {
+            resolve(dbs.map(db => db.name || ''))
+          })
+          .catch(() => {
+            // Error getting databases
+            resolve([])
+          })
+      } else {
+        // Older browsers don't support indexedDB.databases()
+        resolve([])
       }
-
-      request.onerror = (event: any) => {
-        console.error('Error iterating packages:', event)
-        resolve(null)
-      }
-    })
-  } catch (error) {
-    console.error('Error getting all packages with cursor:', error)
-    return null
-  }
+    } catch (error) {
+      console.error('Error getting database names:', error)
+      resolve([])
+    }
+  })
 }
 
 /**
- * Helper function to get database service instance
- * @returns Promise resolving to DatabaseService instance or null on error
+ * Gets package data from a specific database if it matches the current URL
+ * @param dbName The name of the database to check
+ * @param currentUrl The URL to check against the package's root URL
+ * @returns Promise resolving to the package data if found and matching, null otherwise
  */
-async function getDbService(): Promise<DatabaseService | null> {
-  try {
-    // Extract document title or use default
-    const documentTitle = document.title || 'BackChannel Document'
+async function getPackageFromDatabase(
+  dbName: string,
+  currentUrl: string
+): Promise<PackageData | null> {
+  return new Promise(resolve => {
+    try {
+      const request = indexedDB.open(dbName)
+      request.onerror = () => {
+        resolve(null)
+      }
 
-    const dbService = new DatabaseService(documentTitle)
+      request.onsuccess = (event: any) => {
+        const db = event.target.result
+        // Check if the database has a packages store
+        if (!db.objectStoreNames.contains('packages')) {
+          db.close()
+          resolve(null)
+          return
+        }
 
-    if (!dbService.isSupported) {
-      console.warn('IndexedDB is not supported in this browser.')
-      return null
+        try {
+          const transaction = db.transaction(['packages'], 'readonly')
+          const store = transaction.objectStore('packages')
+          const getAllRequest = store.getAll()
+          getAllRequest.onsuccess = () => {
+            const packages = getAllRequest.result as PackageData[]
+
+            // There should be only one package per database
+            if (packages && packages.length > 0) {
+              const pkg = packages[0]
+              // Check if the current URL contains the package's root URL
+              if (pkg.rootURL && currentUrl.includes(pkg.rootURL)) {
+                resolve(pkg)
+                db.close()
+                return
+              }
+            }
+
+            db.close()
+            resolve(null)
+          }
+          getAllRequest.onerror = () => {
+            db.close()
+            resolve(null)
+          }
+        } catch (error) {
+          console.error('Error accessing packages store:', error)
+          db.close()
+          resolve(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error opening database:', error)
+      resolve(null)
     }
-
-    const success = await dbService.init()
-    if (!success) {
-      return null
-    }
-
-    return dbService
-  } catch (error) {
-    console.error('Error initializing database service:', error)
-    return null
-  }
+  })
 }

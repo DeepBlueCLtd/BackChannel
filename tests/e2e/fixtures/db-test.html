@@ -28,6 +28,19 @@
         <button id="init-db">Initialize Database</button>
       </div>
       <div class="result" id="init-result"></div>
+    <div class="section">
+      <h2>Active Feedback Package Test</h2>
+      <div>
+        <label for="test-url">Test URL:</label>
+        <input type="text" id="test-url" value="https://example.com/page">
+      </div>
+      <div style="margin-top: 15px;">
+        <button id="test-active-package">Find Active Package</button>
+        <button id="setup-test-packages">Setup Test Packages</button>
+        <button id="clear-test-packages">Clear Test Packages</button>
+      </div>
+      <div class="result" id="active-package-result"></div>
+    </div>
     </div>
     
     <div class="section">
@@ -105,20 +118,7 @@
       <button id="mock-unsupported">Mock Unsupported Browser</button>
       <div class="result" id="mock-result"></div>
     </div>
-    
-    <div class="section">
-      <h2>Active Feedback Package Test</h2>
-      <div>
-        <label for="test-url">Test URL:</label>
-        <input type="text" id="test-url" value="https://example.com/page">
-      </div>
-      <div style="margin-top: 15px;">
-        <button id="test-active-package">Find Active Package</button>
-        <button id="setup-test-packages">Setup Test Packages</button>
-        <button id="clear-test-packages">Clear Test Packages</button>
-      </div>
-      <div class="result" id="active-package-result"></div>
-    </div>
+
   </div>
 
   <script type="module">
@@ -131,30 +131,67 @@
      */
     async function getActiveFeedbackPackage(currentUrl) {
       try {
-        if (!db) {
-          console.error('Database not initialized');
+        console.log(`Checking for active feedback package for URL: ${currentUrl}`);
+        
+        // Get all available databases
+        const databases = await indexedDB.databases();
+        console.log('Available databases:', databases);
+        
+        // Filter databases with our prefix
+        const feedbackDatabases = databases.filter(db => db.name.startsWith('bc-storage-'));
+        console.log('Feedback databases:', feedbackDatabases);
+        
+        if (feedbackDatabases.length === 0) {
+          console.log('No feedback databases found');
           return null;
         }
-
-        // Since there's no direct method to get all packages, we need to use a cursor
-        // to iterate through all packages in the store
-        const packages = await getAllPackagesWithCursor(db);
-
-        // If no packages or error retrieving packages
-        if (!packages || packages.length === 0) {
-          return null;
-        }
-
-        // Loop through packages to find a match
-        for (const pkg of packages) {
-          // Check if the package's root URL is contained within the current URL
-          if (currentUrl.includes(pkg.rootURL)) {
-            // Return the first matching package
-            return pkg;
+        
+        // Check each database for a matching package
+        for (const dbInfo of feedbackDatabases) {
+          try {
+            console.log(`Processing database: ${dbInfo.name}`);
+            
+            // Open the database
+            const dbService = new DatabaseService(dbInfo.name);
+            console.log('Database service created, initializing...');
+            const initResult = await dbService.init();
+            console.log(`Database initialization result: ${initResult}`);
+            
+            if (!dbService.db) {
+              console.error(`Database object is null for ${dbInfo.name}`);
+              continue;
+            }
+            
+            // Get the package from this database
+            console.log(`Getting packages from database ${dbInfo.name}...`);
+            const packages = await getAllPackagesWithCursor(dbService);
+            console.log(`Retrieved packages from ${dbInfo.name}:`, packages);
+            
+            if (packages && packages.length > 0) {
+              // Each database should only have one package
+              const pkg = packages[0];
+              console.log(`Checking package in ${dbInfo.name}:`, pkg);
+              console.log(`Package rootURL: ${pkg.rootURL}, Current URL: ${currentUrl}`);
+              console.log(`URL contains rootURL: ${currentUrl.includes(pkg.rootURL)}`);
+              
+              // Check if the package's root URL is contained within the current URL
+              if (pkg.rootURL && currentUrl.includes(pkg.rootURL)) {
+                console.log(`Found matching package: ${pkg.name} with rootURL: ${pkg.rootURL}`);
+                return pkg;
+              } else {
+                console.log(`No match for package ${pkg.name} with rootURL ${pkg.rootURL}`);
+              }
+            } else {
+              console.log(`No packages found in database ${dbInfo.name}`);
+            }
+          } catch (dbError) {
+            console.error(`Error processing database ${dbInfo.name}:`, dbError);
+            // Continue to next database
           }
         }
-
+        
         // No matching package found
+        console.log('No matching package found');
         return null;
       } catch (error) {
         console.error('Error checking for active feedback package:', error);
@@ -564,29 +601,41 @@
       }
     ];
     
-    // Setup test packages
+    // Setup test packages - creating a separate database for each package
     document.getElementById('setup-test-packages').addEventListener('click', async () => {
-      if (!db) {
-        document.getElementById('active-package-result').textContent = 'Please initialize the database first';
-        document.getElementById('active-package-result').className = 'result error';
-        return;
-      }
-      
       try {
         const resultElement = document.getElementById('active-package-result');
         let successCount = 0;
         
-        // Add each test package to the database
+        // Create a separate database for each test package
         for (const packageData of testPackages) {
-          const result = await db.addPackage(packageData);
-          if (result) {
-            successCount++;
+          // Create a unique database name with the bc-storage- prefix
+          // Note: packageData.id already contains the prefix, so don't add it again
+          const dbName = packageData.id.startsWith('bc-storage-') ? packageData.id : `bc-storage-${packageData.id}`;
+          
+          // Create a new database instance for this package
+          const packageDb = new DatabaseService(dbName);
+          
+          // Initialize the database
+          const initSuccess = await packageDb.init();
+          
+          if (initSuccess) {
+            // Add the package to its own database
+            const result = await packageDb.addPackage(packageData);
+            if (result) {
+              successCount++;
+              console.log(`Created database '${dbName}' with package '${packageData.name}'`);
+              
+              // Verify the package was actually stored by retrieving it
+              const verifyPackage = await packageDb.getPackage(packageData.id);
+              console.log(`Verification - Retrieved package from ${dbName}:`, verifyPackage);
+            }
           }
         }
         
         resultElement.textContent = successCount === testPackages.length
-          ? `Successfully added ${successCount} test packages`
-          : `Added ${successCount}/${testPackages.length} test packages`;
+          ? `Successfully created ${successCount} separate databases with test packages`
+          : `Created ${successCount}/${testPackages.length} databases with test packages`;
         resultElement.className = successCount > 0 ? 'result success' : 'result error';
       } catch (error) {
         const resultElement = document.getElementById('active-package-result');
@@ -595,30 +644,43 @@
       }
     });
     
-    // Clear test packages
+    // Clear test packages - deleting all separate databases
     document.getElementById('clear-test-packages').addEventListener('click', async () => {
-      if (!db) {
-        document.getElementById('active-package-result').textContent = 'Please initialize the database first';
-        document.getElementById('active-package-result').className = 'result error';
-        return;
-      }
-      
       try {
         const resultElement = document.getElementById('active-package-result');
-        let successCount = 0;
+        let deletedCount = 0;
         
-        // Delete each test package from the database
+        // Delete each test package database
         for (const packageData of testPackages) {
-          const result = await db.deletePackage(packageData.id);
-          if (result) {
-            successCount++;
+          try {
+            // Get the database name - use same logic as setup to avoid double prefix
+            const dbName = packageData.id.startsWith('bc-storage-') ? packageData.id : `bc-storage-${packageData.id}`;
+            
+            // Request to delete the database
+            const deleteRequest = indexedDB.deleteDatabase(dbName);
+            
+            // Set up promise to track completion
+            await new Promise((resolve, reject) => {
+              deleteRequest.onsuccess = () => {
+                deletedCount++;
+                console.log(`Database '${dbName}' deleted successfully`);
+                resolve();
+              };
+              
+              deleteRequest.onerror = () => {
+                console.error(`Error deleting database '${dbName}'`);
+                reject(new Error(`Failed to delete database '${dbName}'`));
+              };
+            });
+          } catch (dbError) {
+            console.error(`Error processing database deletion for ${packageData.id}:`, dbError);
           }
         }
         
-        resultElement.textContent = successCount > 0
-          ? `Successfully deleted ${successCount} test packages`
-          : 'No test packages were deleted';
-        resultElement.className = successCount > 0 ? 'result success' : 'result error';
+        resultElement.textContent = deletedCount === testPackages.length
+          ? `Successfully deleted ${deletedCount} separate databases`
+          : `Deleted ${deletedCount}/${testPackages.length} databases`;
+        resultElement.className = deletedCount > 0 ? 'result success' : 'result error';
       } catch (error) {
         const resultElement = document.getElementById('active-package-result');
         resultElement.textContent = `Error: ${error.message}`;
