@@ -1,0 +1,85 @@
+@import '../variables.css';
+
+/* Base sidebar styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  height: 100%;
+  background-color: var(--bc-bg-light);
+  border-left: 1px solid var(--bc-border-medium);
+  padding: var(--bc-spacing-md);
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 9999;
+  transition: transform 0.3s ease;
+}
+
+/* Fixed position sidebar */
+.sidebar-fixed {
+  right: 0;
+  width: 300px;
+}
+
+/* Collapsible sidebar - expanded state */
+.sidebar-collapsible {
+  right: 0;
+  width: 300px;
+}
+
+/* Collapsible sidebar - collapsed state */
+.sidebar-collapsible.collapsed {
+  transform: translateX(100%);
+}
+
+/* Sidebar header */
+.sidebar-header {
+  margin-top: 0;
+  margin-bottom: var(--bc-spacing-md);
+  padding-bottom: var(--bc-spacing-sm);
+  border-bottom: 1px solid var(--bc-border-light);
+}
+
+/* Sidebar content */
+.sidebar-content {
+  margin-bottom: var(--bc-spacing-md);
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding-top: var(--bc-spacing-md);
+  border-top: 1px solid var(--bc-border-light);
+}
+
+/* Sidebar list */
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-list-item {
+  padding: var(--bc-spacing-sm);
+  border-bottom: 1px solid var(--bc-border-light);
+  cursor: pointer;
+}
+
+.sidebar-list-item:hover {
+  background-color: var(--bc-border-light);
+}
+
+/* Toggle button for collapsible sidebar */
+.sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  left: -30px;
+  width: 30px;
+  height: 60px;
+  background-color: var(--bc-primary);
+  color: var(--bc-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--bc-radius-sm) 0 0 var(--bc-radius-sm);
+  border: none;
+}
