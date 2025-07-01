@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Comment, FeedbackPackage } from '../../../src/types'
+import type { Comment, FeedbackPackage } from '../../../src/types/index'
 
 describe('Shared Types', () => {
   describe('Comment', () => {
@@ -8,7 +8,7 @@ describe('Shared Types', () => {
         timestamp: Date.now(),
         xPath: '/html/body/div[1]/p[2]',
         elementText: 'This is the element text',
-        feedback: 'This is my feedback on this element'
+        feedback: 'This is my feedback on this element',
       }
 
       expect(comment).toBeDefined()
@@ -24,7 +24,7 @@ describe('Shared Types', () => {
       const feedbackPackage: FeedbackPackage = {
         rootURL: 'https://example.com',
         name: 'Example Feedback',
-        author: 'John Doe'
+        author: 'John Doe',
       }
 
       expect(feedbackPackage).toBeDefined()
