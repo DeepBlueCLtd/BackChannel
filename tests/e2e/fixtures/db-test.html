@@ -178,6 +178,48 @@
         </table>
       </div>
     </div>
+    
+    <!-- Step 8: Manually Create Package -->
+    <div class="section">
+      <h2>8. Manually Create Package</h2>
+      <p>Create a new feedback package with custom metadata.</p>
+      
+      <div class="panel">
+        <h4>Package Information</h4>
+        <form id="create-package-form">
+          <div class="form-group">
+            <label for="new-pkg-name">Package Name:</label>
+            <input type="text" id="new-pkg-name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="new-pkg-version">Version:</label>
+            <input type="text" id="new-pkg-version" value="1.0.0" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="new-pkg-author">Author:</label>
+            <input type="text" id="new-pkg-author" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="new-pkg-description">Description:</label>
+            <textarea id="new-pkg-description" rows="3"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="new-pkg-root-url">Root URL:</label>
+            <input type="text" id="new-pkg-root-url" required>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" id="create-package">Create Package</button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="result" id="create-pkg-result"></div>
+    </div>
   </div>
 
   <script type="module">
@@ -654,6 +696,73 @@
       }
     }
     
+    // Step 8: Create package manually
+    async function createPackageManually(event) {
+      event.preventDefault(); // Prevent form submission
+      
+      try {
+        const resultElement = document.getElementById('create-pkg-result');
+        resultElement.textContent = 'Creating package...';
+        resultElement.className = 'result';
+        
+        // Get form values
+        const packageName = document.getElementById('new-pkg-name').value.trim();
+        const packageVersion = document.getElementById('new-pkg-version').value.trim();
+        const packageAuthor = document.getElementById('new-pkg-author').value.trim();
+        const packageDescription = document.getElementById('new-pkg-description').value.trim();
+        const packageRootUrl = document.getElementById('new-pkg-root-url').value.trim();
+        
+        // Validate required fields
+        if (!packageName || !packageVersion || !packageAuthor || !packageRootUrl) {
+          resultElement.textContent = 'Please fill in all required fields.';
+          resultElement.className = 'result error';
+          return;
+        }
+        
+        // Create package metadata
+        const packageMetadata = {
+          name: packageName,
+          version: packageVersion,
+          author: packageAuthor,
+          description: packageDescription,
+          rootURL: packageRootUrl
+        };
+        
+        // Create a new database service (ID will be auto-generated)
+        const dbService = new DatabaseService();
+        
+        // Initialize with package data
+        const initSuccess = await dbService.init(packageMetadata);
+        
+        if (!initSuccess) {
+          resultElement.textContent = 'Failed to create package database.';
+          resultElement.className = 'result error';
+          return;
+        }
+        
+        // Get the database ID that was auto-generated
+        const dbId = dbService.dbId;
+        
+        // Success message
+        resultElement.textContent = `Successfully created package database with ID: ${dbId}`;
+        resultElement.className = 'result success';
+        
+        // Reset form
+        document.getElementById('create-package-form').reset();
+        
+        // Refresh the database list to show the new database
+        await listDatabases();
+        
+        // Load the newly created database
+        await loadDatabase(dbId);
+      } catch (error) {
+        const resultElement = document.getElementById('create-pkg-result');
+        resultElement.textContent = `Error creating package: ${error.message}`;
+        resultElement.className = 'result error';
+        console.error('Error creating package:', error);
+      }
+    }
+    
     // Load database button click handler
     document.getElementById('load-database').addEventListener('click', () => {
       const dbId = document.getElementById('load-db-id').value.trim();
@@ -752,6 +861,9 @@
     
     // Search packages button click handler
     document.getElementById('search-packages').addEventListener('click', searchPackagesByUrl);
+    
+    // Create package form submission handler
+    document.getElementById('create-package-form').addEventListener('submit', createPackageManually);
   </script>
 </body>
 </html>
