@@ -134,12 +134,12 @@ const BackChannel = {
       }
     }
 
-    function onExportClick() {
-      const comments = loadComments(config.storageKey)
+    async function onExportClick() {
+      const comments = await loadComments(config.storageKey)
       exportCommentsToCSV(comments)
     }
 
-    function onCommentSubmit(label: string, selector: string, data: CommentFormData) {
+    async function onCommentSubmit(label: string, selector: string, data: CommentFormData) {
       const newComment: CommentEntry = {
         label,
         selector,
@@ -147,7 +147,7 @@ const BackChannel = {
         timestamp: new Date().toISOString(),
         initials: data.initials,
       }
-      const allComments = saveComment(newComment, config.storageKey)
+      const allComments = await saveComment(newComment, config.storageKey)
       updateLaunchButton(allComments.length)
       highlightCommentedElements(allComments)
 
@@ -162,10 +162,10 @@ const BackChannel = {
       sidebarEl.style.display = 'block'
     }
 
-    function toggleSidebar() {
+    async function toggleSidebar() {
       // First time opening
       if (!sidebarEl) {
-        const initialComments = loadComments(config.storageKey)
+        const initialComments = await loadComments(config.storageKey)
         sidebarEl = renderSidebar(
           initialComments,
           onCommentClick,
@@ -186,7 +186,7 @@ const BackChannel = {
         } else {
           // Showing sidebar
           sidebarEl.style.display = 'block'
-          const comments = loadComments(config.storageKey)
+          const comments = await loadComments(config.storageKey)
           highlightCommentedElements(comments)
         }
       }
@@ -195,8 +195,9 @@ const BackChannel = {
     createLaunchButton(toggleSidebar)
 
     // Set initial comment count on launch button
-    const initialComments = loadComments(config.storageKey)
-    updateLaunchButton(initialComments.length)
+    loadComments(config.storageKey).then(initialComments => {
+      updateLaunchButton(initialComments.length)
+    })
 
     document.addEventListener('click', event => {
       if (isSelectModeActive) {

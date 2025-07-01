@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DatabaseService Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    .result { margin-top: 10px; padding: 10px; background-color: #f5f5f5; border-radius: 3px; min-height: 20px; }
+    .success { color: green; }
+    .error { color: red; }
+    button { margin-right: 5px; padding: 5px 10px; }
+    input { margin: 5px 0; padding: 5px; width: 300px; }
+    label { display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DatabaseService Test</h1>
+    
+    <div class="section">
+      <h2>Database Initialization</h2>
+      <button id="init-db">Initialize Database</button>
+      <div class="result" id="init-result"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Package Store Operations</h2>
+      
+      <div>
+        <label for="package-id">Package ID:</label>
+        <input type="text" id="package-id" value="pkg-001">
+        
+        <label for="package-name">Name:</label>
+        <input type="text" id="package-name" value="Test Package">
+        
+        <label for="package-version">Version:</label>
+        <input type="text" id="package-version" value="1.0.0">
+        
+        <label for="package-author">Author:</label>
+        <input type="text" id="package-author" value="Test Author">
+        
+        <label for="package-description">Description:</label>
+        <input type="text" id="package-description" value="Test package description">
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <button id="add-package">Add Package</button>
+        <button id="get-package">Get Package</button>
+        <button id="update-package">Update Package</button>
+        <button id="delete-package">Delete Package</button>
+      </div>
+      
+      <div class="result" id="package-result"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Comment Store Operations</h2>
+      
+      <div>
+        <label for="comment-timestamp">Timestamp:</label>
+        <input type="text" id="comment-timestamp" value="">
+        
+        <label for="comment-xpath">XPath:</label>
+        <input type="text" id="comment-xpath" value="/html/body/div/p[1]">
+        
+        <label for="comment-text">Element Text:</label>
+        <input type="text" id="comment-text" value="First paragraph">
+        
+        <label for="comment-feedback">Feedback:</label>
+        <input type="text" id="comment-feedback" value="This is a test comment">
+        
+        <label for="comment-url">Page URL:</label>
+        <input type="text" id="comment-url" value="/test-page.html">
+        
+        <label for="comment-title">Document Title:</label>
+        <input type="text" id="comment-title" value="Test Document">
+        
+        <label for="comment-initials">Initials:</label>
+        <input type="text" id="comment-initials" value="TS">
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <button id="add-comment">Add Comment</button>
+        <button id="get-comment">Get Comment</button>
+        <button id="update-comment">Update Comment</button>
+        <button id="delete-comment">Delete Comment</button>
+        <button id="get-all-comments">Get All Comments</button>
+      </div>
+      
+      <div class="result" id="comment-result"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Browser Support Check</h2>
+      <button id="check-support">Check Browser Support</button>
+      <div class="result" id="support-result"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Mock Unsupported Browser</h2>
+      <button id="mock-unsupported">Mock Unsupported Browser</button>
+      <div class="result" id="mock-result"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { DatabaseService } from '../src/services/db.js';
+    
+    // Set up timestamp field with current time
+    document.getElementById('comment-timestamp').value = Date.now();
+    
+    // Database instance
+    let db = null;
+    
+    // Initialize database
+    document.getElementById('init-db').addEventListener('click', async () => {
+      try {
+        db = new DatabaseService('Test Document');
+        console.log('BC: about to init')
+        const success = await db.init();
+        console.log('BC: init complete')
+        
+        const resultElement = document.getElementById('init-result');
+        resultElement.textContent = success 
+          ? 'Database initialized successfully' 
+          : 'Database initialization failed';
+        resultElement.className = success ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('init-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Package operations
+    document.getElementById('add-package').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('package-result').textContent = 'Please initialize the database first';
+        document.getElementById('package-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const packageData = {
+          id: document.getElementById('package-id').value,
+          name: document.getElementById('package-name').value,
+          version: document.getElementById('package-version').value,
+          author: document.getElementById('package-author').value,
+          description: document.getElementById('package-description').value
+        };
+        
+        const result = await db.addPackage(packageData);
+        
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = result 
+          ? `Package added successfully with ID: ${result}` 
+          : 'Failed to add package';
+        resultElement.className = result ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('get-package').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('package-result').textContent = 'Please initialize the database first';
+        document.getElementById('package-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const id = document.getElementById('package-id').value;
+        const result = await db.getPackage(id);
+        
+        const resultElement = document.getElementById('package-result');
+        if (result) {
+          resultElement.textContent = `Package found: ${JSON.stringify(result, null, 2)}`;
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = `Package with ID ${id} not found`;
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('update-package').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('package-result').textContent = 'Please initialize the database first';
+        document.getElementById('package-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const packageData = {
+          id: document.getElementById('package-id').value,
+          name: document.getElementById('package-name').value,
+          version: document.getElementById('package-version').value,
+          author: document.getElementById('package-author').value,
+          description: document.getElementById('package-description').value + ' (Updated)'
+        };
+        
+        const result = await db.updatePackage(packageData);
+        
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = result 
+          ? 'Package updated successfully' 
+          : 'Failed to update package';
+        resultElement.className = result ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('delete-package').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('package-result').textContent = 'Please initialize the database first';
+        document.getElementById('package-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const id = document.getElementById('package-id').value;
+        const result = await db.deletePackage(id);
+        
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = result 
+          ? `Package with ID ${id} deleted successfully` 
+          : `Failed to delete package with ID ${id}`;
+        resultElement.className = result ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('package-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Comment operations
+    document.getElementById('add-comment').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('comment-result').textContent = 'Please initialize the database first';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const timestamp = parseInt(document.getElementById('comment-timestamp').value, 10);
+        
+        const commentData = {
+          timestamp: timestamp,
+          xpath: document.getElementById('comment-xpath').value,
+          elementText: document.getElementById('comment-text').value,
+          feedback: document.getElementById('comment-feedback').value,
+          pageUrl: document.getElementById('comment-url').value,
+          documentTitle: document.getElementById('comment-title').value,
+          initials: document.getElementById('comment-initials').value
+        };
+        
+        const result = await db.addComment(commentData);
+        
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = result !== null
+          ? `Comment added successfully with timestamp: ${result}` 
+          : 'Failed to add comment';
+        resultElement.className = result !== null ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('get-comment').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('comment-result').textContent = 'Please initialize the database first';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const timestamp = parseInt(document.getElementById('comment-timestamp').value, 10);
+        const result = await db.getComment(timestamp);
+        
+        const resultElement = document.getElementById('comment-result');
+        if (result) {
+          resultElement.textContent = `Comment found: ${JSON.stringify(result, null, 2)}`;
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = `Comment with timestamp ${timestamp} not found`;
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('update-comment').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('comment-result').textContent = 'Please initialize the database first';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const timestamp = parseInt(document.getElementById('comment-timestamp').value, 10);
+        
+        const commentData = {
+          timestamp: timestamp,
+          xpath: document.getElementById('comment-xpath').value,
+          elementText: document.getElementById('comment-text').value,
+          feedback: document.getElementById('comment-feedback').value + ' (Updated)',
+          pageUrl: document.getElementById('comment-url').value,
+          documentTitle: document.getElementById('comment-title').value,
+          initials: document.getElementById('comment-initials').value
+        };
+        
+        const result = await db.updateComment(commentData);
+        
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = result 
+          ? 'Comment updated successfully' 
+          : 'Failed to update comment';
+        resultElement.className = result ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('delete-comment').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('comment-result').textContent = 'Please initialize the database first';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const timestamp = parseInt(document.getElementById('comment-timestamp').value, 10);
+        const result = await db.deleteComment(timestamp);
+        
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = result 
+          ? `Comment with timestamp ${timestamp} deleted successfully` 
+          : `Failed to delete comment with timestamp ${timestamp}`;
+        resultElement.className = result ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    document.getElementById('get-all-comments').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('comment-result').textContent = 'Please initialize the database first';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const result = await db.getAllComments();
+        
+        const resultElement = document.getElementById('comment-result');
+        if (result && result.length > 0) {
+          resultElement.textContent = `Found ${result.length} comments: ${JSON.stringify(result, null, 2)}`;
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = 'No comments found';
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('comment-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Check browser support
+    document.getElementById('check-support').addEventListener('click', () => {
+      try {
+        const db = new DatabaseService('Compatibility Test');
+        const isSupported = db.isSupported;
+        
+        const resultElement = document.getElementById('support-result');
+        resultElement.textContent = isSupported 
+          ? 'IndexedDB is supported in this browser' 
+          : 'IndexedDB is not supported in this browser';
+        resultElement.className = isSupported ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('support-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Mock unsupported browser
+    document.getElementById('mock-unsupported').addEventListener('click', () => {
+      try {
+        // Store original IndexedDB
+        const originalIndexedDB = window.indexedDB;
+        
+        // Mock unsupported browser
+        window.indexedDB = undefined;
+        
+        // Check support with mocked environment
+        const db = new DatabaseService('Unsupported Test');
+        const isSupported = db.isSupported;
+        
+        // Restore original IndexedDB
+        window.indexedDB = originalIndexedDB;
+        
+        const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = !isSupported 
+          ? 'Successfully detected unsupported browser (correct)' 
+          : 'Failed to detect unsupported browser (incorrect)';
+        resultElement.className = !isSupported ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+  </script>
+</body>
+</html>

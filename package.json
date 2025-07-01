@@ -26,6 +26,7 @@
     "eslint-plugin-react": "^7.37.5",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
+    "serve-handler": "^6.1.6",
     "typescript": "~5.8.3",
     "vite": "^7.0.0",
     "vitest": "^3.2.4"
