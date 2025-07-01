@@ -15,17 +15,28 @@
       <button id="check-support">Check Browser Support</button>
       <div class="result" id="support-result"></div>
     </div>
+    
+    <!-- Step 2: Unsupported Browser Handling -->
+    <div class="section">
+      <h2>2. Unsupported Browser Handling</h2>
+      <p>This demonstrates how BackChannel behaves when IndexedDB is not supported.</p>
+      <button id="mock-unsupported">Mock Unsupported Browser</button>
+      <button id="restore-support">Restore Normal Support</button>
+      <div class="result" id="mock-result"></div>
+    </div>
   </div>
 
   <script type="module">
     import { DatabaseService } from '../../../src/services/db.js';
     
+    // Store original indexedDB reference for restoring later
+    const originalIndexedDB = window.indexedDB;
+    
     // Step 1: Check browser support for IndexedDB
     document.getElementById('check-support').addEventListener('click', () => {
       try {
-        // Create a temporary DatabaseService instance to check support
-        const tempDb = new DatabaseService('support-check');
-        const isSupported = tempDb.isSupported;
+        // Use the static method to check support
+        const isSupported = DatabaseService.isSupported();
         
         const resultElement = document.getElementById('support-result');
         if (isSupported) {
@@ -38,6 +49,63 @@
       } catch (error) {
         const resultElement = document.getElementById('support-result');
         resultElement.textContent = `Error checking support: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Step 2: Mock unsupported browser
+    document.getElementById('mock-unsupported').addEventListener('click', () => {
+      try {
+        // Save the original indexedDB object if not already saved
+        
+        // Mock unsupported browser by setting indexedDB to undefined
+        window.indexedDB = undefined;
+        
+        // Create a database service to test
+        const db = new DatabaseService('mock-test');
+        
+        // Check if it correctly detects lack of support
+        const resultElement = document.getElementById('mock-result');
+        if (!db.isSupported) {
+          resultElement.textContent = 'Successfully mocked unsupported browser. DatabaseService correctly detects that IndexedDB is not supported.';
+          resultElement.className = 'result success';
+          
+          // Try to initialize and show the graceful failure
+          db.init().then(success => {
+            resultElement.textContent += '\n\nAttempted to initialize database: ' + 
+              (success ? 'Unexpectedly succeeded!' : 'Failed gracefully as expected.');
+          });
+        } else {
+          resultElement.textContent = 'Failed to mock unsupported browser. DatabaseService still thinks IndexedDB is supported.';
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = `Error mocking unsupported browser: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Restore normal browser support
+    document.getElementById('restore-support').addEventListener('click', () => {
+      try {
+        // Restore the original indexedDB object
+        window.indexedDB = originalIndexedDB;
+        
+        // Verify support is restored
+        const isSupported = DatabaseService.isSupported();
+        
+        const resultElement = document.getElementById('mock-result');
+        if (isSupported) {
+          resultElement.textContent = 'Successfully restored IndexedDB support.';
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = 'Failed to restore IndexedDB support.';
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = `Error restoring support: ${error.message}`;
         resultElement.className = 'result error';
       }
     });

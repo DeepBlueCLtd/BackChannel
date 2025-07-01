@@ -40,6 +40,14 @@ class DatabaseService {
    * @private
    */
   _checkSupport() {
+    return DatabaseService.isSupported();
+  }
+  
+  /**
+   * Static method to check if IndexedDB is supported in the current browser
+   * @returns {boolean} - Whether IndexedDB is supported
+   */
+  static isSupported() {
     return typeof window !== 'undefined' && window.indexedDB !== undefined && window.indexedDB !== null;
   }
 
