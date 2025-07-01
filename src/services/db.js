@@ -106,6 +106,26 @@ class DatabaseService {
   }
   
   /**
+   * Static method to check if a database with the given ID exists
+   * @param {string} dbId - Database ID to check
+   * @returns {Promise<boolean>} - Whether the database exists
+   */
+  static async databaseExists(dbId) {
+    if (!DatabaseService.isSupported()) {
+      throw new Error('IndexedDB is not supported in this browser');
+    }
+    
+    try {
+      const databases = await window.indexedDB.databases();
+      const dbName = `bc-storage-${dbId}`;
+      return databases.some(db => db.name === dbName);
+    } catch (error) {
+      console.error('Error checking database existence:', error);
+      throw new Error('Failed to check if database exists');
+    }
+  }
+  
+  /**
    * Static method to search for a package by URL pattern across all databases
    * @param {string} urlPattern - URL pattern to search for
    * @returns {Promise<Array<{dbId: string, dbName: string, packageData: Object}>>} - Array of matching packages with their database info

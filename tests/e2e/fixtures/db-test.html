@@ -594,6 +594,15 @@
         resultElement.textContent = `Loading database ${dbId}...`;
         resultElement.className = 'result';
         
+        // First check if the database exists
+        const exists = await DatabaseService.databaseExists(dbId);
+        if (!exists) {
+          resultElement.textContent = `Database ${dbId} does not exist.`;
+          resultElement.className = 'result error';
+          document.getElementById('loaded-db-container').style.display = 'none';
+          return;
+        }
+        
         // Create a database service to load the package
         const dbService = new DatabaseService(dbId);
         const initSuccess = await dbService.init();
