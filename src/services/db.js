@@ -100,7 +100,7 @@ class DatabaseService {
       if (initResult && this.initialPackageData && this.db) {
         const hasPackages = await this._checkPackagesExist();
         if (!hasPackages) {
-          await this.addPackage(this.initialPackageData);
+          await this._addPackage(this.initialPackageData);
         }
       }
       
@@ -156,6 +156,7 @@ class DatabaseService {
 
   /**
    * Adds a new package to the store if the store is empty
+   * Private method - only used internally
    * @param {Object} packageData - Package data to add
    * @param {string} packageData.id - Unique identifier
    * @param {string} packageData.name - Package name
@@ -163,8 +164,9 @@ class DatabaseService {
    * @param {string} packageData.author - Package author
    * @param {string} packageData.description - Package description
    * @returns {Promise<string|null>} - ID of the added package or null on error
+   * @private
    */
-  async addPackage(packageData) {
+  async _addPackage(packageData) {
     if (!this.db) {
       return null;
     }
@@ -198,23 +200,28 @@ class DatabaseService {
   }
 
   /**
-   * Gets a package by ID
-   * @param {string} id - Package ID
+   * Gets the package from the database
+   * There should only be one package in the database
    * @returns {Promise<Object|null>} - Package data or null if not found
+   * @throws {Error} - If more than one package exists in the database
    */
-  async getPackage(id) {
+  async getPackage() {
     if (!this.db) {
       return null;
     }
 
     try {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const transaction = this.db.transaction(['packages'], 'readonly');
         const store = transaction.objectStore('packages');
-        const request = store.get(id);
+        const request = store.getAll();
 
         request.onsuccess = () => {
-          resolve(request.result || null);
+          if (request.result && request.result.length > 1) {
+            reject(new Error('Database integrity error: More than one package exists in the database'));
+            return;
+          }
+          resolve(request.result && request.result.length === 1 ? request.result[0] : null);
         };
 
         request.onerror = (event) => {
@@ -259,36 +266,7 @@ class DatabaseService {
     }
   }
 
-  /**
-   * Deletes a package by ID
-   * @param {string} id - Package ID to delete
-   * @returns {Promise<boolean>} - Whether the deletion was successful
-   */
-  async deletePackage(id) {
-    if (!this.db) {
-      return false;
-    }
 
-    try {
-      return new Promise((resolve) => {
-        const transaction = this.db.transaction(['packages'], 'readwrite');
-        const store = transaction.objectStore('packages');
-        const request = store.delete(id);
-
-        request.onsuccess = () => {
-          resolve(true);
-        };
-
-        request.onerror = (event) => {
-          console.error('Error deleting package:', event.target.error);
-          resolve(false);
-        };
-      });
-    } catch (error) {
-      console.error('Error in deletePackage:', error);
-      return false;
-    }
-  }
 
   // ========== Comment Store Methods ==========
 
