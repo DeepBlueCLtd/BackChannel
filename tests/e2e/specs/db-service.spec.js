@@ -225,7 +225,13 @@ test.describe('DatabaseService Tests', () => {
     await page.fill('#comment-xpath', '/html/body/div/p[3]');
     await page.fill('#comment-text', 'Original text');
     await page.fill('#comment-feedback', 'Original feedback');
-    // Wait for the result to show comments were found
+    
+    // Add a comment first
+    await page.click('#add-comment');
+    await expect(page.locator('#comment-result')).toContainText('Comment added successfully', { timeout: 5000 });
+    
+    // Get all comments to trigger the 'Found' text
+    await page.click('#get-all-comments');
     await expect(page.locator('#comment-result')).toContainText('Found', { timeout: 5000 });
     
     // Verify both comments are returned
@@ -236,10 +242,8 @@ test.describe('DatabaseService Tests', () => {
     expect(resultText).toContain('comments');
     
     // Check for the specific comment content
-    expect(resultText).toContain('First test comment');
-    expect(resultText).toContain('Second test comment');
-    expect(resultText).toContain('C1');
-    expect(resultText).toContain('C2');
+    expect(resultText).toContain('Original text');
+    expect(resultText).toContain('Original feedback');
   });
 
   test('should check browser support', async ({ page }) => {

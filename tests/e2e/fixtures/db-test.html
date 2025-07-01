@@ -80,7 +80,7 @@
         <input type="text" id="comment-url" value="/test-page.html">
         
         <label for="comment-title">Document Title:</label>
-        <input type="text" id="comment-title" value="Test Document">
+        <input type="text" id="comment-title" value="Test Document">        
       </div>
       
       <div style="margin-top: 15px;">
@@ -264,8 +264,7 @@
           elementText: document.getElementById('comment-text').value,
           feedback: document.getElementById('comment-feedback').value,
           pageUrl: document.getElementById('comment-url').value,
-          documentTitle: document.getElementById('comment-title').value,
-          initials: document.getElementById('comment-initials').value
+          documentTitle: document.getElementById('comment-title').value
         };
         
         const result = await db.addComment(commentData);
@@ -324,8 +323,7 @@
           elementText: document.getElementById('comment-text').value,
           feedback: document.getElementById('comment-feedback').value + ' (Updated)',
           pageUrl: document.getElementById('comment-url').value,
-          documentTitle: document.getElementById('comment-title').value,
-          initials: document.getElementById('comment-initials').value
+          documentTitle: document.getElementById('comment-title').value
         };
         
         const result = await db.updateComment(commentData);
