@@ -105,22 +105,117 @@
       <button id="mock-unsupported">Mock Unsupported Browser</button>
       <div class="result" id="mock-result"></div>
     </div>
+    
+    <div class="section">
+      <h2>Active Feedback Package Test</h2>
+      <div>
+        <label for="test-url">Test URL:</label>
+        <input type="text" id="test-url" value="https://example.com/page">
+      </div>
+      <div style="margin-top: 15px;">
+        <button id="test-active-package">Find Active Package</button>
+        <button id="setup-test-packages">Setup Test Packages</button>
+        <button id="clear-test-packages">Clear Test Packages</button>
+      </div>
+      <div class="result" id="active-package-result"></div>
+    </div>
   </div>
 
   <script type="module">
     import { DatabaseService } from '../../../src/services/db.js';
     
+    /**
+     * Checks if there is an active feedback package for the current URL
+     * @param currentUrl The URL to check for an active feedback package
+     * @returns Promise resolving to the matching package or null if none found
+     */
+    async function getActiveFeedbackPackage(currentUrl) {
+      try {
+        if (!db) {
+          console.error('Database not initialized');
+          return null;
+        }
+
+        // Since there's no direct method to get all packages, we need to use a cursor
+        // to iterate through all packages in the store
+        const packages = await getAllPackagesWithCursor(db);
+
+        // If no packages or error retrieving packages
+        if (!packages || packages.length === 0) {
+          return null;
+        }
+
+        // Loop through packages to find a match
+        for (const pkg of packages) {
+          // Check if the package's root URL is contained within the current URL
+          if (currentUrl.includes(pkg.rootURL)) {
+            // Return the first matching package
+            return pkg;
+          }
+        }
+
+        // No matching package found
+        return null;
+      } catch (error) {
+        console.error('Error checking for active feedback package:', error);
+        return null;
+      }
+    }
+
+    /**
+     * Gets all packages from the database using a cursor
+     * @param dbService The database service instance
+     * @returns Promise resolving to an array of packages or null on error
+     */
+    async function getAllPackagesWithCursor(dbService) {
+      return new Promise((resolve, reject) => {
+        try {
+          const packages = [];
+          const transaction = dbService.db.transaction(['packages'], 'readonly');
+          const store = transaction.objectStore('packages');
+          const request = store.openCursor();
+
+          request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+              packages.push(cursor.value);
+              cursor.continue();
+            } else {
+              resolve(packages);
+            }
+          };
+
+          request.onerror = (event) => {
+            console.error('Error opening cursor:', event.target.error);
+            reject(event.target.error);
+          };
+
+          transaction.oncomplete = () => {
+            if (packages.length === 0) {
+              console.log('No packages found in database');
+            }
+          };
+        } catch (error) {
+          console.error('Error getting packages with cursor:', error);
+          reject(error);
+        }
+      });
+    }
+    
     // Set up timestamp field with current time
     document.getElementById('comment-timestamp').value = Date.now();
     
     // Database instance
+    // Expose db to window for Playwright test compatibility
     let db = null;
+    window.db = null;
     
     // Initialize database
     document.getElementById('init-db').addEventListener('click', async () => {
       try {
         const dbName = document.getElementById('db-name').value || 'Test Document';
         db = new DatabaseService(dbName);
+        window.db = db; // Expose to window for Playwright test compatibility
         console.log(`BC: about to init database: ${dbName}`)
         const success = await db.init();
         console.log('BC: init complete')
@@ -412,23 +507,143 @@
         // Store original IndexedDB
         const originalIndexedDB = window.indexedDB;
         
-        // Mock unsupported browser
-        window.indexedDB = undefined;
+        // Mock unsupported browser by setting indexedDB to undefined
+        Object.defineProperty(window, 'indexedDB', {
+          value: undefined,
+          writable: true
+        });
         
-        // Check support with mocked environment
         const db = new DatabaseService('Unsupported Test');
         const isSupported = db.isSupported;
         
-        // Restore original IndexedDB
-        window.indexedDB = originalIndexedDB;
-        
         const resultElement = document.getElementById('mock-result');
         resultElement.textContent = !isSupported 
-          ? 'Successfully detected unsupported browser (correct)' 
-          : 'Failed to detect unsupported browser (incorrect)';
+          ? 'Successfully mocked unsupported browser' 
+          : 'Failed to mock unsupported browser';
         resultElement.className = !isSupported ? 'result success' : 'result error';
+        
+        // Restore original IndexedDB
+        Object.defineProperty(window, 'indexedDB', {
+          value: originalIndexedDB,
+          writable: true
+        });
       } catch (error) {
         const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Test Active Feedback Package functionality
+    
+    // Sample test packages with different rootURLs
+    const testPackages = [
+      {
+        id: 'pkg-test-1',
+        name: 'Example Site Package',
+        rootURL: 'https://example.com',
+        author: 'Test User',
+        version: '1.0.0',
+        description: 'Test package for example.com'
+      },
+      {
+        id: 'pkg-test-2',
+        name: 'Other Site Package',
+        rootURL: 'https://other.com',
+        author: 'Test User',
+        version: '1.0.0',
+        description: 'Test package for other.com'
+      },
+      {
+        id: 'pkg-test-3',
+        name: 'Third Site Package',
+        rootURL: 'https://third.com/subpath',
+        author: 'Test User',
+        version: '1.0.0',
+        description: 'Test package with subpath'
+      }
+    ];
+    
+    // Setup test packages
+    document.getElementById('setup-test-packages').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('active-package-result').textContent = 'Please initialize the database first';
+        document.getElementById('active-package-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const resultElement = document.getElementById('active-package-result');
+        let successCount = 0;
+        
+        // Add each test package to the database
+        for (const packageData of testPackages) {
+          const result = await db.addPackage(packageData);
+          if (result) {
+            successCount++;
+          }
+        }
+        
+        resultElement.textContent = successCount === testPackages.length
+          ? `Successfully added ${successCount} test packages`
+          : `Added ${successCount}/${testPackages.length} test packages`;
+        resultElement.className = successCount > 0 ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Clear test packages
+    document.getElementById('clear-test-packages').addEventListener('click', async () => {
+      if (!db) {
+        document.getElementById('active-package-result').textContent = 'Please initialize the database first';
+        document.getElementById('active-package-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const resultElement = document.getElementById('active-package-result');
+        let successCount = 0;
+        
+        // Delete each test package from the database
+        for (const packageData of testPackages) {
+          const result = await db.deletePackage(packageData.id);
+          if (result) {
+            successCount++;
+          }
+        }
+        
+        resultElement.textContent = successCount > 0
+          ? `Successfully deleted ${successCount} test packages`
+          : 'No test packages were deleted';
+        resultElement.className = successCount > 0 ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = `Error: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Test finding active package for URL
+    document.getElementById('test-active-package').addEventListener('click', async () => {
+      try {
+        const testUrl = document.getElementById('test-url').value;
+        const resultElement = document.getElementById('active-package-result');
+        
+        // Call the getActiveFeedbackPackage function
+        const activePackage = await getActiveFeedbackPackage(testUrl);
+        
+        if (activePackage) {
+          resultElement.textContent = `Active package found: ${JSON.stringify(activePackage, null, 2)}`;
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = `No active package found for URL: ${testUrl}`;
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
         resultElement.textContent = `Error: ${error.message}`;
         resultElement.className = 'result error';
       }
