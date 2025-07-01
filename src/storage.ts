@@ -50,18 +50,22 @@ function getDbService(): Promise<DatabaseService> {
     return Promise.reject(new Error('IndexedDB not supported'))
   }
 
-  return dbService.init()
-    .then((success: boolean) => {
-      if (!success) {
-        return Promise.reject(new Error('Failed to initialize database'))
-      }
-      dbInitialized = true
-      return dbService as DatabaseService
-    })
-    .catch((error: Error) => {
-      console.error('Error initializing database:', error)
-      return Promise.reject(error)
-    })
+  return (
+    dbService
+      .init()
+      .then((success: boolean) => {
+        if (!success) {
+          return Promise.reject(new Error('Failed to initialize database'))
+        }
+        dbInitialized = true
+        return dbService as DatabaseService
+      })
+      // @ts-ignore
+      .catch((error: Error) => {
+        console.error('Error initializing database:', error)
+        return Promise.reject(error)
+      })
+  )
 }
 
 // Fallback to localStorage if IndexedDB is not available
