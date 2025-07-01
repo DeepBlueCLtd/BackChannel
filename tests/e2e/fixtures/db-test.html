@@ -49,6 +49,7 @@
           <option value="custom">Custom Test Database</option>
         </select>
         <button id="setup-test-packages">Setup Test Packages</button>
+        <button id="clear-test-packages">Clear Test Packages</button>
       </div>
       <div class="result" id="active-package-result"></div>
       
@@ -214,28 +215,28 @@
           </div>
           
           <div class="form-group">
-            <label for="new-pkg-name">Package Name:</label>
-            <input type="text" id="new-pkg-name" required>
+            <label for="package-name">Package Name:</label>
+            <input type="text" id="package-name" required>
           </div>
           
           <div class="form-group">
-            <label for="new-pkg-version">Version:</label>
-            <input type="text" id="new-pkg-version" value="1.0.0" required>
+            <label for="package-version">Version:</label>
+            <input type="text" id="package-version" value="1.0.0" required>
           </div>
           
           <div class="form-group">
-            <label for="new-pkg-author">Author:</label>
-            <input type="text" id="new-pkg-author" required>
+            <label for="package-author">Author:</label>
+            <input type="text" id="package-author" required>
           </div>
           
           <div class="form-group">
-            <label for="new-pkg-description">Description:</label>
-            <textarea id="new-pkg-description" rows="3"></textarea>
+            <label for="package-description">Description:</label>
+            <textarea id="package-description" rows="3"></textarea>
           </div>
           
           <div class="form-group">
-            <label for="new-pkg-root-url">Root URL:</label>
-            <input type="text" id="new-pkg-root-url" required>
+            <label for="package-root-url">Root URL:</label>
+            <input type="text" id="package-root-url" required>
           </div>
           
           <div class="form-actions">
@@ -255,23 +256,23 @@
       <div id="comments-container" style="display: none;">
         <h4>Add/Edit Comment</h4>
         <form id="add-comment-form">
-          <!-- Hidden fields for Playwright tests -->
-          <div class="form-group" style="display: none;">
+          <!-- Fields for Playwright tests -->
+          <div class="form-group">
             <label for="comment-timestamp">Timestamp:</label>
             <input type="text" id="comment-timestamp">
           </div>
           
-          <div class="form-group" style="display: none;">
+          <div class="form-group">
             <label for="comment-xpath">XPath:</label>
             <input type="text" id="comment-xpath">
           </div>
           
-          <div class="form-group" style="display: none;">
+          <div class="form-group">
             <label for="comment-text">Element Text:</label>
             <input type="text" id="comment-text">
           </div>
           
-          <div class="form-group" style="display: none;">
+          <div class="form-group">
             <label for="comment-title">Document Title:</label>
             <input type="text" id="comment-title">
           </div>
@@ -492,6 +493,36 @@
     document.getElementById('test-template').addEventListener('change', (event) => {
       const customForm = document.getElementById('custom-package-form');
       customForm.style.display = event.target.value === 'custom' ? 'block' : 'none';
+    });
+    
+    // Clear test packages button click handler
+    document.getElementById('clear-test-packages').addEventListener('click', async () => {
+      try {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = 'Clearing test packages...';
+        resultElement.className = 'result';
+        
+        // Get all BackChannel databases
+        const databases = await DatabaseService.getAllBackChannelDatabases();
+        
+        // Delete each database
+        let deletedCount = 0;
+        for (const dbInfo of databases) {
+          const dbId = dbInfo.replace('bc-storage-', '');
+          await indexedDB.deleteDatabase(`bc-storage-${dbId}`);
+          deletedCount++;
+        }
+        
+        resultElement.textContent = `Successfully cleared ${deletedCount} test packages.`;
+        resultElement.className = 'result success';
+        
+        // Refresh the database list
+        await listDatabases();
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = `Error clearing test packages: ${error.message}`;
+        resultElement.className = 'result error';
+      }
     });
     
     // Setup test packages for Playwright tests
@@ -905,11 +936,11 @@
         resultElement.className = 'result';
         
         // Get form values
-        const packageName = document.getElementById('new-pkg-name').value.trim();
-        const packageVersion = document.getElementById('new-pkg-version').value.trim();
-        const packageAuthor = document.getElementById('new-pkg-author').value.trim();
-        const packageDescription = document.getElementById('new-pkg-description').value.trim();
-        const packageRootUrl = document.getElementById('new-pkg-root-url').value.trim();
+        const packageName = document.getElementById('package-name').value.trim();
+        const packageVersion = document.getElementById('package-version').value.trim();
+        const packageAuthor = document.getElementById('package-author').value.trim();
+        const packageDescription = document.getElementById('package-description').value.trim();
+        const packageRootUrl = document.getElementById('package-root-url').value.trim();
         
         // Validate required fields
         if (!packageName || !packageVersion || !packageAuthor || !packageRootUrl) {

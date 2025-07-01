@@ -162,8 +162,8 @@ class DatabaseService {
         // Get the package from this database
         const packageData = await dbService.getPackage();
         
-        // Check if the package's rootURL matches the pattern
-        if (packageData && packageData.rootURL && packageData.rootURL.includes(urlPattern)) {
+        // Check if the URL starts with the package's rootURL (proper subpath matching)
+        if (packageData && packageData.rootURL && urlPattern.startsWith(packageData.rootURL)) {
           matchingPackages.push({
             dbId,
             dbName,
