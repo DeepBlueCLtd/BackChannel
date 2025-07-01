@@ -82,6 +82,85 @@ class DatabaseService {
   static isSupported() {
     return typeof window !== 'undefined' && window.indexedDB !== undefined && window.indexedDB !== null;
   }
+  
+  /**
+   * Static method to get all BackChannel databases
+   * @returns {Promise<string[]>} - Array of BackChannel database names
+   */
+  static async getAllBackChannelDatabases() {
+    if (!DatabaseService.isSupported()) {
+      throw new Error('IndexedDB is not supported in this browser');
+    }
+    
+    try {
+      // Get all available databases
+      const databases = await window.indexedDB.databases();
+      // Filter to only include BackChannel databases and return their names
+      return databases
+        .filter(db => db.name.startsWith('bc-storage-'))
+        .map(db => db.name);
+    } catch (error) {
+      console.error('Error listing databases:', error);
+      throw new Error('Failed to list databases');
+    }
+  }
+  
+  /**
+   * Static method to search for a package by URL pattern across all databases
+   * @param {string} urlPattern - URL pattern to search for
+   * @returns {Promise<Array<{dbId: string, dbName: string, packageData: Object}>>} - Array of matching packages with their database info
+   */
+  static async searchByUrl(urlPattern) {
+    if (!urlPattern) {
+      throw new Error('URL pattern is required');
+    }
+    
+    if (!DatabaseService.isSupported()) {
+      throw new Error('IndexedDB is not supported in this browser');
+    }
+    
+    // Get all BackChannel databases
+    const allDatabases = await DatabaseService.getAllBackChannelDatabases();
+    
+    if (allDatabases.length === 0) {
+      return [];
+    }
+    
+    // Track matching packages
+    const matchingPackages = [];
+    
+    // Search through each database
+    for (const dbName of allDatabases) {
+      // Extract the database ID from the name
+      const dbId = dbName.replace('bc-storage-', '');
+      
+      // Create a database service for this database
+      const dbService = new DatabaseService(dbId);
+      await dbService.init();
+      
+      try {
+        // Get the package from this database
+        const packageData = await dbService.getPackage();
+        
+        // Check if the package's rootURL matches the pattern
+        if (packageData && packageData.rootURL && packageData.rootURL.includes(urlPattern)) {
+          matchingPackages.push({
+            dbId,
+            dbName,
+            packageData
+          });
+        }
+      } catch (packageError) {
+        console.warn(`Error getting package from database ${dbId}:`, packageError);
+        // Continue with next database
+      } finally {
+        // Close the database connection
+        dbService.close();
+      }
+    }
+    
+    return matchingPackages;
+  }
 
   /**
    * Initializes the database connection and optionally adds initial package data

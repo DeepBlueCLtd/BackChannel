@@ -147,10 +147,43 @@
         </div>
       </div>
     </div>
+    
+    <!-- Step 7: Search for Package by URL -->
+    <div class="section">
+      <h2>7. Search for Package by URL</h2>
+      <p>Find and load a feedback package that matches a specific URL pattern.</p>
+      
+      <div>
+        <label for="search-url">URL Pattern:</label>
+        <input type="text" id="search-url" placeholder="Enter URL or pattern" style="width: 300px;">
+        <button id="search-packages">Search Packages</button>
+      </div>
+      
+      <div class="result" id="search-result"></div>
+      
+      <div id="search-results-container" style="display: none; margin-top: 15px;">
+        <h3>Matching Packages</h3>
+        <table id="search-results-table" class="data-table">
+          <thead>
+            <tr>
+              <th>Database ID</th>
+              <th>Package Name</th>
+              <th>Root URL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="search-results-list">
+            <!-- Search results will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script type="module">
     import { DatabaseService } from '../../../src/services/db.js';
+    
+    // Note: Using DatabaseService.getAllBackChannelDatabases() static method instead of local implementation
     
     // Define test package templates (without IDs - they will be generated at creation time)
     const standardTestPackages = [
@@ -414,9 +447,8 @@
         resultElement.textContent = 'Retrieving databases...';
         resultElement.className = 'result';
         
-        // Get all available databases
-        const databases = await indexedDB.databases();
-        const feedbackDatabases = databases.filter(db => db.name.startsWith('bc-storage-'));
+        // Get all BackChannel databases using the static method
+        const feedbackDatabases = await DatabaseService.getAllBackChannelDatabases();
         
         if (feedbackDatabases.length === 0) {
           resultElement.textContent = 'No BackChannel databases found.';
@@ -435,7 +467,7 @@
         for (const dbInfo of feedbackDatabases) {
           try {
             // Extract the ID from the database name (bc-storage-{id})
-            const dbId = dbInfo.name.replace('bc-storage-', '');
+            const dbId = dbInfo.replace('bc-storage-', '');
             
             // Create a database service to load the package
             const dbService = new DatabaseService(dbId);
@@ -624,6 +656,93 @@
       }
       loadDatabase(dbId);
     });
+    
+    // Step 7: Search for package by URL
+    async function searchPackagesByUrl() {
+      try {
+        const urlPattern = document.getElementById('search-url').value.trim();
+        if (!urlPattern) {
+          const resultElement = document.getElementById('search-result');
+          resultElement.textContent = 'Please enter a URL pattern to search for.';
+          resultElement.className = 'result error';
+          document.getElementById('search-results-container').style.display = 'none';
+          return;
+        }
+        
+        const resultElement = document.getElementById('search-result');
+        resultElement.textContent = `Searching for packages matching URL pattern: ${urlPattern}...`;
+        resultElement.className = 'result';
+        
+        // Clear previous search results
+        const searchResultsList = document.getElementById('search-results-list');
+        searchResultsList.innerHTML = '';
+        
+        // Use the static searchByUrl method from DatabaseService
+        const matchingPackages = await DatabaseService.searchByUrl(urlPattern);
+        
+        if (matchingPackages.length === 0) {
+          resultElement.textContent = `No packages found matching URL pattern: ${urlPattern}`;
+          resultElement.className = 'result warning';
+          document.getElementById('search-results-container').style.display = 'none';
+          return;
+        }
+
+        // Populate the search results table
+        for (const match of matchingPackages) {
+          const row = document.createElement('tr');
+          
+          // Database ID cell
+          const dbIdCell = document.createElement('td');
+          dbIdCell.textContent = match.dbId;
+          row.appendChild(dbIdCell);
+          
+          // Package name cell
+          const nameCell = document.createElement('td');
+          nameCell.textContent = match.packageData.name || 'N/A';
+          row.appendChild(nameCell);
+          
+          // Root URL cell
+          const urlCell = document.createElement('td');
+          urlCell.textContent = match.packageData.rootURL || 'N/A';
+          row.appendChild(urlCell);
+          
+          // Actions cell
+          const actionsCell = document.createElement('td');
+          
+          // Load button
+          const loadButton = document.createElement('button');
+          loadButton.textContent = 'Load';
+          loadButton.className = 'action-button';
+          loadButton.setAttribute('data-db-id', match.dbId);
+          loadButton.addEventListener('click', (event) => {
+            const dbIdToLoad = event.target.getAttribute('data-db-id');
+            document.getElementById('load-db-id').value = dbIdToLoad;
+            loadDatabase(dbIdToLoad);
+            
+            // Scroll to the loaded database section
+            document.querySelector('div.section:nth-child(6)').scrollIntoView({ behavior: 'smooth' });
+          });
+          actionsCell.appendChild(loadButton);
+          
+          row.appendChild(actionsCell);
+          searchResultsList.appendChild(row);
+        }
+        
+        // Show the search results container
+        document.getElementById('search-results-container').style.display = 'block';
+        
+        resultElement.textContent = `Found ${matchingPackages.length} package(s) matching URL pattern: ${urlPattern}`;
+        resultElement.className = 'result success';
+      } catch (error) {
+        const resultElement = document.getElementById('search-result');
+        resultElement.textContent = `Error searching for packages: ${error.message}`;
+        resultElement.className = 'result error';
+        document.getElementById('search-results-container').style.display = 'none';
+      }
+    }
+    
+    // Search packages button click handler
+    document.getElementById('search-packages').addEventListener('click', searchPackagesByUrl);
   </script>
 </body>
 </html>
