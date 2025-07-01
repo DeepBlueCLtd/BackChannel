@@ -53,10 +53,10 @@ test.describe('DatabaseService Tests', () => {
     
     // Verify that the page title is correct
     const title = await page.title();
-    expect(title).toBe('DatabaseService Test');
+    expect(title).toBe('BackChannel Database Test');
     
     // Verify that key elements are present
-    await expect(page.locator('h1')).toContainText('DatabaseService Test');
+    await expect(page.locator('h1')).toContainText('BackChannel Database Test');
     await expect(page.locator('#init-db')).toBeVisible();
     await expect(page.locator('#init-result')).toBeVisible();
   });

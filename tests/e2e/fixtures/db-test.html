@@ -30,6 +30,17 @@
       <h2>3. Create Test Databases</h2>
       <p>Create a series of test databases, each with valid package metadata.</p>
       
+      <!-- Database initialization for Playwright tests -->
+      <div class="panel" style="margin-bottom: 15px;">
+        <h3>Initialize Database</h3>
+        <div class="form-group">
+          <label for="db-name">Database Name:</label>
+          <input type="text" id="db-name" value="Test Database" placeholder="Enter database name">
+          <button id="init-db">Initialize Database</button>
+        </div>
+        <div class="result" id="init-result"></div>
+      </div>
+      
       <div>
         <h3>Test Database Templates</h3>
         <select id="test-template">
@@ -37,7 +48,9 @@
           <option value="many">Many Test Databases (10)</option>
           <option value="custom">Custom Test Database</option>
         </select>
+        <button id="setup-test-packages">Setup Test Packages</button>
       </div>
+      <div class="result" id="active-package-result"></div>
       
       <div id="custom-package-form" style="display: none; margin-top: 15px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
         <h4>Custom Package Details</h4>
@@ -159,6 +172,13 @@
         <button id="search-packages">Search Packages</button>
       </div>
       
+      <!-- Test active package for Playwright tests -->
+      <div style="margin-top: 15px;">
+        <label for="test-url">Test URL:</label>
+        <input type="text" id="test-url" placeholder="Enter URL to test" style="width: 300px;">
+        <button id="test-active-package">Test Active Package</button>
+      </div>
+      
       <div class="result" id="search-result"></div>
       
       <div id="search-results-container" style="display: none; margin-top: 15px;">
@@ -187,6 +207,12 @@
       <div class="panel">
         <h4>Package Information</h4>
         <form id="create-package-form">
+          <!-- Field for Playwright tests -->
+          <div class="form-group">
+            <label for="package-id">Package ID:</label>
+            <input type="text" id="package-id">
+          </div>
+          
           <div class="form-group">
             <label for="new-pkg-name">Package Name:</label>
             <input type="text" id="new-pkg-name" required>
@@ -219,6 +245,76 @@
       </div>
       
       <div class="result" id="create-pkg-result"></div>
+    </div>
+    
+    <!-- Step 9: Add/Edit Comments -->
+    <div class="section">
+      <h2>9. Add/Edit Comments</h2>
+      <p>Add or edit comments for the currently loaded feedback package.</p>
+      
+      <div id="comments-container" style="display: none;">
+        <h4>Add/Edit Comment</h4>
+        <form id="add-comment-form">
+          <!-- Hidden fields for Playwright tests -->
+          <div class="form-group" style="display: none;">
+            <label for="comment-timestamp">Timestamp:</label>
+            <input type="text" id="comment-timestamp">
+          </div>
+          
+          <div class="form-group" style="display: none;">
+            <label for="comment-xpath">XPath:</label>
+            <input type="text" id="comment-xpath">
+          </div>
+          
+          <div class="form-group" style="display: none;">
+            <label for="comment-text">Element Text:</label>
+            <input type="text" id="comment-text">
+          </div>
+          
+          <div class="form-group" style="display: none;">
+            <label for="comment-title">Document Title:</label>
+            <input type="text" id="comment-title">
+          </div>
+          
+          <!-- Visible fields -->
+          <div class="form-group">
+            <label for="comment-url">URL:</label>
+            <input type="text" id="comment-url" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="comment-feedback">Comment:</label>
+            <textarea id="comment-feedback" rows="3" required></textarea>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" id="add-comment">Add Comment</button>
+            <button type="button" id="cancel-edit">Cancel Edit</button>
+          </div>
+        </form>
+        
+        <div class="result" id="comment-result"></div>
+        
+        <div id="comments-list-container" style="display: none; margin-top: 15px;">
+          <h4>Comments</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Comment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="comments-list">
+              <!-- Comments will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="result" id="no-package-loaded-message">
+        Please load a package first to manage comments.
+      </div>
     </div>
   </div>
 
@@ -270,6 +366,50 @@
     // Store original indexedDB reference for restoring later
     const originalIndexedDB = window.indexedDB;
     
+    // Initialize database handler for Playwright tests
+    document.getElementById('init-db').addEventListener('click', async () => {
+      try {
+        const dbName = document.getElementById('db-name').value.trim() || 'Test Database';
+        const resultElement = document.getElementById('init-result');
+        resultElement.textContent = 'Initializing database...';
+        resultElement.className = 'result';
+        
+        // Create a database service with the specified name
+        const dbService = new DatabaseService(`bc-storage-${dbName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+        
+        // Initialize with a test package
+        const success = await dbService.init({
+          name: dbName,
+          version: '1.0.0',
+          author: 'Test User',
+          description: 'Test database created for Playwright tests',
+          rootURL: 'https://example.com'
+        });
+        
+        if (success) {
+          resultElement.textContent = `Database '${dbName}' initialized successfully.`;
+          resultElement.className = 'result success';
+          
+          // Store the current database service and package for later use
+          currentDbService = dbService;
+          currentPackage = await dbService.getPackage();
+          
+          // Show the comments container if we have a package loaded
+          if (currentPackage) {
+            document.getElementById('comments-container').style.display = 'block';
+            await loadComments();
+          }
+        } else {
+          resultElement.textContent = `Failed to initialize database '${dbName}'.`;
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('init-result');
+        resultElement.textContent = `Error initializing database: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
     // Step 1: Check browser support for IndexedDB
     document.getElementById('check-support').addEventListener('click', () => {
       try {
@@ -278,10 +418,10 @@
         
         const resultElement = document.getElementById('support-result');
         if (isSupported) {
-          resultElement.textContent = 'Your browser supports IndexedDB. BackChannel can function properly.';
+          resultElement.textContent = 'IndexedDB is supported. BackChannel can function properly.';
           resultElement.className = 'result success';
         } else {
-          resultElement.textContent = 'Your browser does not support IndexedDB. BackChannel will not function properly.';
+          resultElement.textContent = 'IndexedDB is not supported. BackChannel will not function properly.';
           resultElement.className = 'result error';
         }
       } catch (error) {
@@ -352,6 +492,54 @@
     document.getElementById('test-template').addEventListener('change', (event) => {
       const customForm = document.getElementById('custom-package-form');
       customForm.style.display = event.target.value === 'custom' ? 'block' : 'none';
+    });
+    
+    // Setup test packages for Playwright tests
+    document.getElementById('setup-test-packages').addEventListener('click', async () => {
+      try {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = 'Setting up test packages...';
+        resultElement.className = 'result';
+        
+        // Create test databases with example packages for testing
+        const testDatabases = [
+          {
+            name: 'Example Site Package',
+            version: '1.0.0',
+            author: 'Test User',
+            description: 'Test package for example.com',
+            rootURL: 'https://example.com'
+          },
+          {
+            name: 'Test Site Package',
+            version: '1.0.0',
+            author: 'Test User',
+            description: 'Test package for test.com',
+            rootURL: 'https://test.com'
+          },
+          {
+            name: 'Subpath Test Package',
+            version: '1.0.0',
+            author: 'Test User',
+            description: 'Test package for subpath testing',
+            rootURL: 'https://subpath.example.com/app'
+          }
+        ];
+        
+        // Create each test database
+        for (let i = 0; i < testDatabases.length; i++) {
+          const dbName = `test-db-${i + 1}`;
+          const dbService = new DatabaseService(`bc-storage-${dbName}`);
+          await dbService.init(testDatabases[i]);
+        }
+        
+        resultElement.textContent = 'Successfully created test packages for Playwright tests.';
+        resultElement.className = 'result success';
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = `Error setting up test packages: ${error.message}`;
+        resultElement.className = 'result error';
+      }
     });
     
     // Step 3: Create test databases
@@ -681,6 +869,17 @@
           // Show the loaded database container
           document.getElementById('loaded-db-container').style.display = 'block';
           
+          // Store current database service and package for comments functionality
+          currentDbService = dbService;
+          currentPackage = packageData;
+          
+          // Enable comments functionality
+          document.getElementById('comments-container').style.display = 'block';
+          document.getElementById('no-package-loaded-message').style.display = 'none';
+          
+          // Load comments for this package
+          await loadComments();
+          
           resultElement.textContent = `Successfully loaded database ${dbId}.`;
           resultElement.className = 'result success';
         } catch (packageError) {
@@ -763,6 +962,193 @@
       }
     }
     
+    // Global variables
+    let currentDbService = null;
+    let currentPackage = null;
+    let currentComments = [];
+    
+    // Step 9: Comments functionality
+    
+    // Load comments for the current package
+    async function loadComments() {
+      if (!currentDbService || !currentPackage) {
+        document.getElementById('comment-result').textContent = 'No package loaded.';
+        document.getElementById('comment-result').className = 'result error';
+        document.getElementById('comments-list-container').style.display = 'none';
+        return;
+      }
+      
+      try {
+        // Get comments from the database
+        const comments = await currentDbService.getAllComments();
+        currentComments = comments || [];
+        
+        // Display comments
+        displayComments();
+        
+        // Clear any previous result message
+        document.getElementById('comment-result').textContent = '';
+        document.getElementById('comment-result').className = 'result';
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error loading comments: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+        document.getElementById('comments-list-container').style.display = 'none';
+      }
+    }
+    
+    // Display comments in the UI
+    function displayComments() {
+      const commentsList = document.getElementById('comments-list');
+      commentsList.innerHTML = '';
+      
+      if (currentComments.length === 0) {
+        document.getElementById('comments-list-container').style.display = 'none';
+        return;
+      }
+      
+      // Show the comments list container
+      document.getElementById('comments-list-container').style.display = 'block';
+      
+      // Add each comment to the table
+      currentComments.forEach((comment) => {
+        const row = document.createElement('tr');
+        
+        // URL cell
+        const urlCell = document.createElement('td');
+        urlCell.textContent = comment.pageUrl || comment.url || 'N/A';
+        row.appendChild(urlCell);
+        
+        // Comment text cell
+        const textCell = document.createElement('td');
+        textCell.textContent = comment.feedback || comment.text || '';
+        row.appendChild(textCell);
+        
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        
+        // Edit button
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.className = 'action-button';
+        editButton.setAttribute('data-comment-timestamp', comment.timestamp);
+        editButton.addEventListener('click', (event) => {
+          const timestamp = event.target.getAttribute('data-comment-timestamp');
+          editComment(timestamp);
+        });
+        actionsCell.appendChild(editButton);
+        
+        // Delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'action-button';
+        deleteButton.style.backgroundColor = '#f44336';
+        deleteButton.setAttribute('data-comment-timestamp', comment.timestamp);
+        deleteButton.addEventListener('click', (event) => {
+          const timestamp = event.target.getAttribute('data-comment-timestamp');
+          deleteComment(timestamp);
+        });
+        actionsCell.appendChild(deleteButton);
+        
+        row.appendChild(actionsCell);
+        commentsList.appendChild(row);
+      });
+    }
+    
+    // Add a new comment
+    async function addComment(event) {
+      event.preventDefault(); // Prevent form submission
+      
+      if (!currentDbService || !currentPackage) {
+        document.getElementById('comment-result').textContent = 'No package loaded.';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const commentUrl = document.getElementById('comment-url').value.trim();
+        const commentFeedback = document.getElementById('comment-feedback').value.trim();
+        
+        // Validate required fields
+        if (!commentUrl || !commentFeedback) {
+          document.getElementById('comment-result').textContent = 'Please fill in all required fields.';
+          document.getElementById('comment-result').className = 'result error';
+          return;
+        }
+        
+        // Get values from hidden fields for Playwright tests
+        const timestampField = document.getElementById('comment-timestamp');
+        const xpathField = document.getElementById('comment-xpath');
+        const elementTextField = document.getElementById('comment-text');
+        const titleField = document.getElementById('comment-title');
+        
+        // Create comment object
+        const newComment = {
+          pageUrl: commentUrl,
+          feedback: commentFeedback,
+          timestamp: timestampField && timestampField.value ? parseInt(timestampField.value) : Date.now(),
+          elementText: elementTextField && elementTextField.value ? elementTextField.value : '',
+          xpath: xpathField && xpathField.value ? xpathField.value : '',
+          documentTitle: titleField && titleField.value ? titleField.value : document.title
+        };
+        
+        // Add comment to the database
+        await currentDbService.addComment(newComment);
+        
+        // Reload comments
+        await loadComments();
+        
+        // Success message
+        document.getElementById('comment-result').textContent = 'Comment added successfully.';
+        document.getElementById('comment-result').className = 'result success';
+        
+        // Reset form
+        document.getElementById('add-comment-form').reset();
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error adding comment: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+      }
+    }
+    
+    // Edit a comment
+    function editComment(timestamp) {
+      const comment = currentComments.find(c => c.timestamp == timestamp);
+      if (!comment) return;
+      
+      // Fill the form with the comment data
+      document.getElementById('comment-url').value = comment.pageUrl || comment.url || '';
+      document.getElementById('comment-text').value = comment.feedback || comment.text || '';
+      
+      // Change the form to edit mode
+      const addButton = document.getElementById('add-comment');
+      addButton.textContent = 'Update Comment';
+      addButton.setAttribute('data-edit-timestamp', timestamp);
+      
+      // Focus on the form
+      document.getElementById('comment-url').focus();
+    }
+    
+    // Delete a comment
+    async function deleteComment(timestamp) {
+      if (!timestamp) return;
+      
+      if (!confirm('Are you sure you want to delete this comment?')) return;
+      
+      try {
+        // Remove the comment from the database
+        await currentDbService.deleteComment(timestamp);
+        
+        // Reload comments
+        await loadComments();
+        
+        // Success message
+        document.getElementById('comment-result').textContent = 'Comment deleted successfully.';
+        document.getElementById('comment-result').className = 'result success';
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error deleting comment: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+      }
+    }
+
     // Load database button click handler
     document.getElementById('load-database').addEventListener('click', () => {
       const dbId = document.getElementById('load-db-id').value.trim();
@@ -773,6 +1159,56 @@
         return;
       }
       loadDatabase(dbId);
+    });
+    
+    // Test active package for Playwright tests
+    document.getElementById('test-active-package').addEventListener('click', async () => {
+      try {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = 'Testing active package...';
+        resultElement.className = 'result';
+        
+        const testUrl = document.getElementById('test-url').value.trim();
+        if (!testUrl) {
+          resultElement.textContent = 'Please enter a URL to test.';
+          resultElement.className = 'result error';
+          return;
+        }
+        
+        // Use the static method to search for a package by URL
+        const matchingDatabases = await DatabaseService.searchByUrl(testUrl);
+        
+        if (matchingDatabases.length === 0) {
+          resultElement.textContent = `No active package found for URL: ${testUrl}`;
+          resultElement.className = 'result warning';
+          return;
+        }
+        
+        // Load the first matching database
+        const dbId = matchingDatabases[0].dbId;
+        const dbService = new DatabaseService(dbId);
+        await dbService.open();
+        const pkg = await dbService.getPackage();
+        
+        // Store the current database service and package
+        currentDbService = dbService;
+        currentPackage = pkg;
+        
+        // Show the comments container
+        document.getElementById('comments-container').style.display = 'block';
+        await loadComments();
+        
+        // Display result
+        resultElement.innerHTML = `Active package found:<br>
+          <strong>Name:</strong> ${pkg.name}<br>
+          <strong>Root URL:</strong> ${pkg.rootURL}<br>
+          <strong>Database ID:</strong> ${dbId}`;
+        resultElement.className = 'result success';
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = `Error testing active package: ${error.message}`;
+        resultElement.className = 'result error';
+      }
     });
     
     // Step 7: Search for package by URL
@@ -864,6 +1300,110 @@
     
     // Create package form submission handler
     document.getElementById('create-package-form').addEventListener('submit', createPackageManually);
+    
+    // Add comment form submit handler
+    document.getElementById('add-comment-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      // Check if we're in edit mode
+      const addButton = document.getElementById('add-comment');
+      const editTimestamp = addButton.getAttribute('data-edit-timestamp');
+      
+      if (editTimestamp !== null) {
+        // We're updating an existing comment
+        await updateComment(editTimestamp, event);
+      } else {
+        // We're adding a new comment
+        await addComment(event);
+      }
+    });
+    
+    // Cancel edit button click handler
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      // Reset the form
+      document.getElementById('add-comment-form').reset();
+      
+      // Change the button back to Add Comment
+      const addButton = document.getElementById('add-comment');
+      addButton.textContent = 'Add Comment';
+      addButton.removeAttribute('data-edit-mode');
+      addButton.removeAttribute('data-comment-timestamp');
+      
+      // Hide the cancel button
+      document.getElementById('cancel-edit').style.display = 'none';
+    });
+    
+    // Update comment function
+    async function updateComment(timestamp, event) {
+      event.preventDefault(); // Prevent form submission
+      
+      if (!currentDbService || !currentPackage || !timestamp) {
+        document.getElementById('comment-result').textContent = 'Invalid comment or no package loaded.';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        // Get the existing comment
+        const existingComment = await currentDbService.getComment(parseInt(timestamp));
+        if (!existingComment) {
+          document.getElementById('comment-result').textContent = 'Comment not found.';
+          document.getElementById('comment-result').className = 'result error';
+          return;
+        }
+        
+        const commentUrl = document.getElementById('comment-url').value.trim();
+        const commentFeedback = document.getElementById('comment-feedback').value.trim();
+        
+        // Validate required fields
+        if (!commentUrl || !commentFeedback) {
+          document.getElementById('comment-result').textContent = 'Please fill in all required fields.';
+          document.getElementById('comment-result').className = 'result error';
+          return;
+        }
+        
+        // Get values from hidden fields for Playwright tests
+        const timestampField = document.getElementById('comment-timestamp');
+        const xpathField = document.getElementById('comment-xpath');
+        const elementTextField = document.getElementById('comment-text');
+        const titleField = document.getElementById('comment-title');
+        
+        // Update comment object
+        const updatedComment = {
+          ...existingComment,
+          pageUrl: commentUrl,
+          feedback: commentFeedback,
+          timestamp: existingComment.timestamp,
+          elementText: elementTextField && elementTextField.value ? elementTextField.value : existingComment.elementText || '',
+          xpath: xpathField && xpathField.value ? xpathField.value : existingComment.xpath || '',
+          documentTitle: titleField && titleField.value ? titleField.value : existingComment.documentTitle || document.title,
+          updated: Date.now()
+        };
+        
+        // Update comment in the database
+        await currentDbService.updateComment(updatedComment);
+        
+        // Reload comments
+        await loadComments();
+        
+        // Success message
+        document.getElementById('comment-result').textContent = 'Comment updated successfully.';
+        document.getElementById('comment-result').className = 'result success';
+        
+        // Reset form and button
+        document.getElementById('add-comment-form').reset();
+        const submitButton = document.getElementById('add-comment');
+        submitButton.textContent = 'Add Comment';
+        submitButton.removeAttribute('data-edit-mode');
+        submitButton.removeAttribute('data-comment-timestamp');
+        
+        // Hide the cancel button
+        document.getElementById('cancel-edit').style.display = 'none';
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error updating comment: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+      }
+    }
   </script>
 </body>
 </html>
