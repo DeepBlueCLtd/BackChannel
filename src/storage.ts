@@ -5,7 +5,6 @@ export interface CommentEntry {
   selector: string
   text: string
   timestamp: string
-  initials?: string
 }
 
 // Map between CommentEntry and DatabaseService comment schema
@@ -17,7 +16,6 @@ function mapCommentEntryToDbComment(entry: CommentEntry, documentTitle: string):
     feedback: entry.text,
     pageUrl: window.location.pathname,
     documentTitle: documentTitle,
-    initials: entry.initials,
   }
 }
 
@@ -27,7 +25,6 @@ function mapDbCommentToCommentEntry(dbComment: any): CommentEntry {
     selector: dbComment.xpath,
     text: dbComment.feedback,
     timestamp: dbComment.timestamp.toString(),
-    initials: dbComment.initials,
   }
 }
 

@@ -94,12 +94,22 @@ BackChannel.init({
 
 ## 5. CSV Export Schema
 
+To minimise duplication, the CSV export is split into two elements:
+
+### 5.1 Document Metadata
+| Field           | Description                          |
+|----------------|--------------------------------------|
+| Document Title  | The title of the document              |
+| Document URL    | The URL of the document                |
+| Document ID     | A unique identifier for the document   |
+| Reviewer        | User name           |
+
+### 5.2 Comment Data
 | Field           | Description                          |
 |----------------|--------------------------------------|
 | Element Label  | Text content or selector             |
 | Comment Text   | The comment entered by the user      |
 | Timestamp      | ISO string of comment creation       |
-| Reviewer       | User initials (optional)             |
 
 ---
 
