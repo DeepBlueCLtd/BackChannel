@@ -72,3 +72,18 @@ label {
   margin: 2px;
   font-size: 12px;
 }
+
+/* Panel styles */
+.panel {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-top: 15px;
+  background-color: #f9f9f9;
+}
+
+.panel h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}

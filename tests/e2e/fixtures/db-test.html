@@ -41,11 +41,10 @@
       
       <div id="custom-package-form" style="display: none; margin-top: 15px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
         <h4>Custom Package Details</h4>
+        <p><em>Note: Database ID will be auto-generated using timestamp</em></p>
+        
         <label for="package-name">Package Name:</label>
         <input type="text" id="package-name" value="Custom Package">
-        
-        <label for="package-id">Package ID:</label>
-        <input type="text" id="package-id" value="custom-pkg-001">
         
         <label for="package-version">Version:</label>
         <input type="text" id="package-version" value="1.0.0">
@@ -98,15 +97,64 @@
         </table>
       </div>
     </div>
+    
+    <!-- Step 6: Load Database -->
+    <div class="section">
+      <h2>6. Load Database</h2>
+      <p>Load and display a specific database and its package information.</p>
+      
+      <div>
+        <label for="load-db-id">Database ID:</label>
+        <input type="text" id="load-db-id" placeholder="Enter database ID">
+        <button id="load-database">Load Database</button>
+      </div>
+      
+      <div class="result" id="load-db-result"></div>
+      
+      <div id="loaded-db-container" style="display: none; margin-top: 15px;">
+        <h3>Loaded Database: <span id="loaded-db-name"></span></h3>
+        
+        <div class="panel">
+          <h4>Package Details</h4>
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <th>Package ID</th>
+                <td id="loaded-pkg-id"></td>
+              </tr>
+              <tr>
+                <th>Name</th>
+                <td id="loaded-pkg-name"></td>
+              </tr>
+              <tr>
+                <th>Version</th>
+                <td id="loaded-pkg-version"></td>
+              </tr>
+              <tr>
+                <th>Author</th>
+                <td id="loaded-pkg-author"></td>
+              </tr>
+              <tr>
+                <th>Description</th>
+                <td id="loaded-pkg-description"></td>
+              </tr>
+              <tr>
+                <th>Root URL</th>
+                <td id="loaded-pkg-url"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script type="module">
     import { DatabaseService } from '../../../src/services/db.js';
     
-    // Define test package templates
+    // Define test package templates (without IDs - they will be generated at creation time)
     const standardTestPackages = [
       {
-        id: 'test-pkg-001',
         name: 'Example Site Package',
         version: '1.0.0',
         author: 'Test User',
@@ -114,7 +162,6 @@
         rootURL: 'https://example.com'
       },
       {
-        id: 'test-pkg-002',
         name: 'Second Site Package',
         version: '1.0.0',
         author: 'Test User',
@@ -122,7 +169,6 @@
         rootURL: 'https://second.com'
       },
       {
-        id: 'test-pkg-003',
         name: 'Third Site Package',
         version: '1.0.0',
         author: 'Test User',
@@ -135,9 +181,7 @@
     function generateManyTestPackages(count = 10) {
       const packages = [];
       for (let i = 1; i <= count; i++) {
-        const paddedNum = String(i).padStart(3, '0');
         packages.push({
-          id: `many-pkg-${paddedNum}`,
           name: `Site ${i} Package`,
           version: '1.0.0',
           author: 'Test User',
@@ -254,9 +298,8 @@
             packagesToCreate = generateManyTestPackages(10);
             break;
           case 'custom':
-            // Create a single custom package from form inputs
+            // Create a single custom package from form inputs (without ID - will be generated)
             packagesToCreate = [{
-              id: document.getElementById('package-id').value,
               name: document.getElementById('package-name').value,
               version: document.getElementById('package-version').value,
               author: document.getElementById('package-author').value,
@@ -448,8 +491,9 @@
               loadButton.setAttribute('data-db-id', dbId);
               loadButton.addEventListener('click', (event) => {
                 const dbIdToLoad = event.target.getAttribute('data-db-id');
-                // Load database functionality will be implemented in next step
-                alert(`Load database ${dbIdToLoad} - Feature coming in next step`);
+                // Set the database ID in the input field and load it
+                document.getElementById('load-db-id').value = dbIdToLoad;
+                loadDatabase(dbIdToLoad);
               });
               actionsCell.appendChild(loadButton);
               
@@ -510,6 +554,76 @@
     
     // Refresh databases button click handler
     document.getElementById('refresh-databases').addEventListener('click', listDatabases);
+    
+    // Step 6: Load database
+    async function loadDatabase(dbId) {
+      try {
+        const resultElement = document.getElementById('load-db-result');
+        resultElement.textContent = `Loading database ${dbId}...`;
+        resultElement.className = 'result';
+        
+        // Create a database service to load the package
+        const dbService = new DatabaseService(dbId);
+        const initSuccess = await dbService.init();
+        
+        if (!initSuccess) {
+          resultElement.textContent = `Failed to initialize database ${dbId}.`;
+          resultElement.className = 'result error';
+          document.getElementById('loaded-db-container').style.display = 'none';
+          return;
+        }
+        
+        // Get the package from the database
+        try {
+          const packageData = await dbService.getPackage();
+          
+          if (!packageData) {
+            resultElement.textContent = `No package found in database ${dbId}.`;
+            resultElement.className = 'result error';
+            document.getElementById('loaded-db-container').style.display = 'none';
+            return;
+          }
+          
+          // Display the database name
+          document.getElementById('loaded-db-name').textContent = `bc-storage-${dbId}`;
+          
+          // Display package details
+          document.getElementById('loaded-pkg-id').textContent = packageData.id || 'N/A';
+          document.getElementById('loaded-pkg-name').textContent = packageData.name || 'N/A';
+          document.getElementById('loaded-pkg-version').textContent = packageData.version || 'N/A';
+          document.getElementById('loaded-pkg-author').textContent = packageData.author || 'N/A';
+          document.getElementById('loaded-pkg-description').textContent = packageData.description || 'N/A';
+          document.getElementById('loaded-pkg-url').textContent = packageData.rootURL || 'N/A';
+          
+          // Show the loaded database container
+          document.getElementById('loaded-db-container').style.display = 'block';
+          
+          resultElement.textContent = `Successfully loaded database ${dbId}.`;
+          resultElement.className = 'result success';
+        } catch (packageError) {
+          resultElement.textContent = `Error loading package from database ${dbId}: ${packageError.message}`;
+          resultElement.className = 'result error';
+          document.getElementById('loaded-db-container').style.display = 'none';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('load-db-result');
+        resultElement.textContent = `Error loading database ${dbId}: ${error.message}`;
+        resultElement.className = 'result error';
+        document.getElementById('loaded-db-container').style.display = 'none';
+      }
+    }
+    
+    // Load database button click handler
+    document.getElementById('load-database').addEventListener('click', () => {
+      const dbId = document.getElementById('load-db-id').value.trim();
+      if (!dbId) {
+        const resultElement = document.getElementById('load-db-result');
+        resultElement.textContent = 'Please enter a database ID.';
+        resultElement.className = 'result error';
+        return;
+      }
+      loadDatabase(dbId);
+    });
   </script>
 </body>
 </html>

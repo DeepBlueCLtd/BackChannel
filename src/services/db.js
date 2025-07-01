@@ -12,13 +12,45 @@ class DatabaseService {
    * @param {Object} [packageData] - Optional package data to initialize with
    */
   constructor(documentTitle, packageData = null) {
-    this.dbName = `bc-storage-${this._sanitizeDbName(documentTitle || 'default')}`;
+    // Generate a database ID using the last 6 digits of the timestamp if not provided
+    const dbId = documentTitle || this._generateDatabaseId();
+    this.dbName = `bc-storage-${this._sanitizeDbName(dbId)}`;
     this.dbVersion = 1;
     this.db = null;
     this.isSupported = this._checkSupport();
-    this.initialPackageData = packageData;
+    
+    // If packageData is provided, ensure it has an ID
+    if (packageData) {
+      // If package doesn't have an ID, generate one
+      if (!packageData.id) {
+        packageData.id = this._generatePackageId();
+      }
+      this.initialPackageData = packageData;
+    } else {
+      this.initialPackageData = null;
+    }
   }
 
+  /**
+   * Generates a database ID using the last 6 digits of the current timestamp
+   * @returns {string} - Generated database ID
+   * @private
+   */
+  _generateDatabaseId() {
+    // Get current timestamp and take the last 6 digits
+    const timestamp = Date.now().toString();
+    return timestamp.substring(timestamp.length - 6);
+  }
+  
+  /**
+   * Generates a package ID using a prefix and the current timestamp
+   * @returns {string} - Generated package ID
+   * @private
+   */
+  _generatePackageId() {
+    return `pkg-${Date.now()}`;
+  }
+  
   /**
    * Sanitizes the document title for use in database name
    * @param {string} name - Document title
@@ -166,7 +198,7 @@ class DatabaseService {
    * Adds a new package to the store if the store is empty
    * Private method - only used internally
    * @param {Object} packageData - Package data to add
-   * @param {string} packageData.id - Unique identifier
+   * @param {string} [packageData.id] - Unique identifier (will be auto-generated if not provided)
    * @param {string} packageData.name - Package name
    * @param {string} packageData.version - Package version
    * @param {string} packageData.author - Package author
@@ -185,6 +217,11 @@ class DatabaseService {
       if (hasPackages) {
         console.warn('Cannot add new package: database already has a package. Use updatePackage instead.');
         return null;
+      }
+      
+      // Ensure the package has an ID
+      if (!packageData.id) {
+        packageData.id = this._generatePackageId();
       }
 
       return new Promise((resolve) => {
