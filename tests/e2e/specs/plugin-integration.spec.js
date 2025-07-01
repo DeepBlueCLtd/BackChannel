@@ -12,10 +12,10 @@ const __dirname = path.dirname(__filename);
 
 test('BackChannel plugin integrates properly into a page', async ({ page }) => {
   // Path to the test HTML file
-  const testHtmlPath = path.resolve(__dirname, '../test/plugin-test.html');
+  const testHtmlPath = path.resolve(__dirname, '../fixtures/plugin-test.html');
   
   // Check if the plugin file exists
-  const pluginPath = path.resolve(__dirname, '../dist/backchannel.js');
+  const pluginPath = path.resolve(__dirname, '../../../dist/backchannel.js');
   if (!fs.existsSync(pluginPath)) {
     console.warn('Plugin file not found. Run yarn build-plugin first.');
     test.skip();

@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 playwright-report
 playwright-report/index.html
+test-results
