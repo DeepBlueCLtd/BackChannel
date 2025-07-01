@@ -145,7 +145,6 @@ const BackChannel = {
         selector,
         text: data.comment,
         timestamp: new Date().toISOString(),
-        initials: data.initials,
       }
       const allComments = await saveComment(newComment, config.storageKey)
       updateLaunchButton(allComments.length)
@@ -201,7 +200,7 @@ const BackChannel = {
 
     document.addEventListener('click', event => {
       if (isSelectModeActive) {
-        handleElementClick(event, config.requireInitials, onCommentSubmit, exitSelectMode)
+        handleElementClick(event, onCommentSubmit, exitSelectMode)
       }
     })
   },

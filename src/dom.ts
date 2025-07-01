@@ -63,7 +63,6 @@ export function highlightCommentedElements(comments: CommentEntry[]) {
 
 export function handleElementClick(
   event: MouseEvent,
-  requireInitials: boolean,
   onCommentSubmit: (label: string, selector: string, data: CommentFormData) => void,
   exitSelectMode: () => void
 ) {
@@ -83,7 +82,7 @@ export function handleElementClick(
   const label = getElementLabel(clickedEl)
   const selector = getCssSelector(clickedEl)
 
-  showCommentForm(clickedEl, requireInitials, data => {
+  showCommentForm(clickedEl, data => {
     onCommentSubmit(label, selector, data)
   })
 }

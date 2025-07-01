@@ -193,7 +193,6 @@ test.describe('DatabaseService Tests', () => {
     await page.fill('#comment-feedback', 'This is a test comment from Playwright');
     await page.fill('#comment-url', '/test-document.html');
     await page.fill('#comment-title', 'Test Document Title');
-    await page.fill('#comment-initials', 'PT');
     
     // Add the comment
     await page.click('#add-comment');

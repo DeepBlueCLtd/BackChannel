@@ -131,14 +131,9 @@ export function renderSidebar(
 
 export interface CommentFormData {
   comment: string
-  initials?: string
 }
 
-export function showCommentForm(
-  targetEl: HTMLElement,
-  requireInitials: boolean,
-  onSubmit: (data: CommentFormData) => void
-) {
+export function showCommentForm(targetEl: HTMLElement, onSubmit: (data: CommentFormData) => void) {
   // Remove any existing form
   const existingForm = document.querySelector('#backchannel-comment-form')
   if (existingForm) {
@@ -179,18 +174,6 @@ export function showCommentForm(
 
   container.appendChild(commentLabel)
 
-  let initialsInput: HTMLInputElement | undefined
-  if (requireInitials) {
-    const initialsLabel = document.createElement('label')
-    initialsLabel.innerText = 'Initials:'
-    initialsInput = document.createElement('input')
-    initialsInput.type = 'text'
-    initialsInput.name = 'initials'
-    initialsInput.required = true
-    initialsLabel.append(initialsInput)
-    container.appendChild(initialsLabel)
-  }
-
   const submitButton = document.createElement('button')
   submitButton.type = 'submit'
   submitButton.innerText = 'Submit'
@@ -230,7 +213,6 @@ export function showCommentForm(
     event.preventDefault()
     const formData: CommentFormData = {
       comment: commentTextarea.value,
-      initials: initialsInput?.value,
     }
     onSubmit(formData)
     form.remove()
