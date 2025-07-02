@@ -530,6 +530,9 @@
           try {
             // Create a new database instance with the package data
             const dbService = new DatabaseService(packageData.id, packageData);
+
+            // introduce v-short delay, so they get new id (based on timestamp)
+            await new Promise(resolve => setTimeout(resolve, 10));
             
             // Initialize the database with the package data
             const initSuccess = await dbService.init();
@@ -744,9 +747,6 @@
           }
         }
         
-        // Show the database list container
-        document.getElementById('database-list-container').style.display = 'block';
-        
         // Display results
         resultElement.innerHTML = `<strong>Found ${loadedCount}/${feedbackDatabases.length} databases with packages</strong>`;
         if (results.length > 0) {
@@ -755,6 +755,9 @@
         } else {
           resultElement.className = 'result success';
         }
+
+        // Show the database list container
+        document.getElementById('database-list-container').style.display = 'block';
       } catch (error) {
         const resultElement = document.getElementById('list-db-result');
         resultElement.textContent = `Error listing databases: ${error.message}`;
