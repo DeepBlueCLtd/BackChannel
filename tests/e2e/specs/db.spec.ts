@@ -670,4 +670,157 @@ test.describe('DatabaseService', () => {
       }
     }
   })
+
+  /**
+   * Performance test for large packages and many comments
+   * This test verifies that the DatabaseService can handle large packages and many comments efficiently
+   */
+  test('should handle large packages and many comments efficiently', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+
+    // First initialize the database system
+    await page.click('#init-db')
+    await page.waitForSelector('#init-result.result.success')
+
+    // Create a custom test database
+    await page.selectOption('#test-template', 'custom')
+
+    // Fill in custom package details
+    await page.fill('#package-name', 'Performance Test Package')
+    await page.fill('#package-version', '1.0.0')
+    await page.fill('#package-author', 'Playwright Performance Test')
+    await page.fill('#package-description', 'A large test package for performance testing')
+    await page.fill('#package-root-url', 'https://example.com/performance-test')
+    // Create the test database and measure time
+    const startCreateTime = Date.now()
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+    const createTime = Date.now() - startCreateTime
+    console.log(`Database creation time: ${createTime}ms`)
+
+    // List databases to get the ID of our newly created database
+    await page.click('#list-databases')
+    await page.waitForSelector('#list-db-result.result.success')
+
+    // Find the database ID from the list
+    const databaseRows = page.locator('#database-list tr')
+    const rowCount = await databaseRows.count()
+    let foundDbId = ''
+
+    for (let i = 0; i < rowCount; i++) {
+      const rowText = await databaseRows.nth(i).textContent()
+      if (rowText && rowText.includes('Performance Test Package')) {
+        // Extract the database ID from the row
+        const idCell = await databaseRows.nth(i).locator('td').first()
+        const fullId = await idCell.textContent()
+        foundDbId = fullId ? fullId.replace('bc-storage-', '') : ''
+        break
+      }
+    }
+
+    expect(foundDbId).not.toBe('') // Ensure we found our database
+
+    // Now load the database to work with it
+    await page.fill('#load-db-id', foundDbId)
+    const startLoadTime = Date.now()
+    await page.click('#load-database')
+    await page.waitForSelector('#load-db-result.result.success')
+    const loadTime = Date.now() - startLoadTime
+    console.log(`Database load time: ${loadTime}ms`)
+
+    // Wait for comments container to be visible
+    await page.waitForSelector('#comments-container', { state: 'visible' })
+
+    // Add many comments to the database
+    const numComments = 30 // Adjust based on performance needs
+    const commentAddTimes: number[] = []
+
+    for (let i = 0; i < numComments; i++) {
+      const testUrl = `https://example.com/performance-test/page-${i}.html`
+      const testFeedback = `Test comment #${i} with some content. ${'Lorem ipsum '.repeat(5)}`
+      const timestamp = Date.now() + i // Ensure unique timestamps
+
+      // Fill in the comment form
+      await page.fill('#comment-timestamp', timestamp.toString())
+      await page.fill('#comment-xpath', `/html/body/div[${(i % 5) + 1}]/p[${(i % 3) + 1}]`)
+      await page.fill('#comment-text', `Element text for comment #${i}`)
+      await page.fill('#comment-title', `Test Page Title ${i}`)
+      await page.fill('#comment-url', testUrl)
+      await page.fill('#comment-feedback', testFeedback)
+
+      // Submit the comment form and measure the time
+      const startAddTime = Date.now()
+      await page.click('#add-comment')
+      await page.waitForSelector('#comment-result.result.success')
+      const addTime = Date.now() - startAddTime
+      commentAddTimes.push(addTime)
+
+      // Wait a short time between adding comments to ensure they're properly saved
+      // This helps prevent race conditions with IndexedDB operations
+      await page.waitForTimeout(50)
+    }
+
+    // Calculate average comment add time
+    const avgAddTime = commentAddTimes.reduce((sum, time) => sum + time, 0) / numComments
+    console.log(`Average comment add time: ${avgAddTime}ms`)
+
+    // Test comment listing performance
+    const startListTime = Date.now()
+
+    // Force a reload of the database to refresh comments
+    // We'll try this up to 3 times to ensure all comments are loaded
+    let commentCount = 0
+    let attempts = 0
+    const maxAttempts = 3
+
+    while (commentCount < numComments && attempts < maxAttempts) {
+      attempts++
+      console.log(`Attempt ${attempts} to load all comments...`)
+
+      // Reload the database
+      await page.click('#load-database')
+      await page.waitForSelector('#load-db-result.result.success')
+      await page.waitForSelector('#comments-container', { state: 'visible' })
+
+      // Wait a bit longer for all comments to be displayed
+      await page.waitForTimeout(500)
+
+      // Check the comment count
+      const commentRows = page.locator('#comments-list tr')
+      commentCount = await commentRows.count()
+      console.log(`Found ${commentCount} comments on attempt ${attempts}`)
+
+      if (commentCount === numComments) break
+    }
+
+    const listTime = Date.now() - startListTime
+    console.log(`Comment listing time for ${commentCount} comments: ${listTime}ms`)
+
+    // Verify that all comments were added
+    // If we still don't have all comments after multiple attempts, we'll fail the test
+    // but with a more descriptive message
+    if (commentCount !== numComments) {
+      throw new Error(
+        `Expected ${numComments} comments but found ${commentCount} after ${attempts} attempts`
+      )
+    }
+    expect(commentCount).toBe(numComments)
+
+    // Test search performance
+    const startSearchTime = Date.now()
+    await page.fill('#test-url', 'https://example.com/performance-test/page-10')
+    await page.click('#test-active-package')
+    await page.waitForSelector('#search-result.result.success')
+    const searchTime = Date.now() - startSearchTime
+    console.log(`URL search time: ${searchTime}ms`)
+
+    // Performance assertions
+    // These thresholds should be adjusted based on expected performance
+    expect(createTime).toBeLessThan(2000) // Database creation should be under 2 seconds
+    expect(loadTime).toBeLessThan(1000) // Database loading should be under 1 second
+    expect(avgAddTime).toBeLessThan(500) // Average comment add time should be under 500ms
+    expect(listTime).toBeLessThan(5000) // Listing all comments should be under 5 seconds (increased due to retry mechanism)
+    expect(searchTime).toBeLessThan(500) // URL search should be under 500ms
+  })
 })
