@@ -339,21 +339,21 @@ test.describe('DatabaseService', () => {
 
     // Wait for the search result to be displayed with a timeout of 10 seconds
     await page.waitForSelector('#search-results-container', { timeout: 10000 })
-    
+
     // Verify that the search result contains the expected text
     const searchResult = page.locator('#search-result')
     await expect(searchResult).toContainText('Found')
     await expect(searchResult).toContainText('package')
-    
+
     // Verify that the search results container is visible
     const searchResultsContainer = page.locator('#search-results-container')
     await expect(searchResultsContainer).toBeVisible()
-    
+
     // Verify that the search results table has at least one row
     const searchResultsTable = page.locator('#search-results-list tr')
     const rowCount = await searchResultsTable.count()
     expect(rowCount).toBeGreaterThan(0)
-    
+
     // Verify that the table contains expected columns
     const firstRow = page.locator('#search-results-list tr:nth-child(1)')
     await expect(firstRow.locator('td:nth-child(1)')).toBeVisible() // Database ID column
@@ -368,24 +368,24 @@ test.describe('DatabaseService', () => {
   test('should test active package for a given URL', async ({ page }) => {
     await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
     await page.waitForLoadState('networkidle')
-    
+
     // First create some standard test databases to ensure we have data
     await page.selectOption('#test-template', 'standard')
     await page.click('#create-test-dbs')
     await page.waitForSelector('#test-db-result.result.success')
-    
+
     // Enter a URL to test
     // The standard test databases contain packages with URLs like 'https://example.com/'
     await page.fill('#test-url', 'https://example.com/some/page.html')
-    
+
     // Click the Test Active Package button
     await page.click('#test-active-package')
-    
+
     // Wait for the active package result to be displayed
-    const activePackageResult = page.locator('#active-package-result')
+    const activePackageResult = page.locator('#search-result')
     await expect(activePackageResult).toBeVisible()
     await expect(activePackageResult).toHaveClass('result success')
-    
+
     // Verify that the active package result contains the expected text
     await expect(activePackageResult).toContainText('Active package found')
     await expect(activePackageResult).toContainText('Example Site Package')
