@@ -435,7 +435,7 @@ test.describe('DatabaseService', () => {
     const timestamp = Date.now().toString()
 
     // Fill in the comment form
-    await page.fill('#comment-timestamp', timestamp)
+    await page.fill('#comment-timestamp', timestamp.toString())
     await page.fill('#comment-xpath', '/html/body/div[1]/p')
     await page.fill('#comment-text', 'Test element text')
     await page.fill('#comment-title', 'Test Page Title')
@@ -505,7 +505,7 @@ test.describe('DatabaseService', () => {
     const timestamp = Date.now().toString()
 
     // Fill in the comment form
-    await page.fill('#comment-timestamp', timestamp)
+    await page.fill('#comment-timestamp', timestamp.toString())
     await page.fill('#comment-xpath', '/html/body/div[1]/p')
     await page.fill('#comment-text', 'Test element text')
     await page.fill('#comment-title', 'Test Page Title')
@@ -595,10 +595,11 @@ test.describe('DatabaseService', () => {
     // Create a test comment first
     const testUrl = 'https://example.com/delete-test-page.html'
     const testFeedback = 'Comment to be deleted'
-    const timestamp = Date.now().toString()
+    // Use a numeric timestamp since IndexedDB uses numeric keys
+    const timestamp = Date.now()
 
     // Fill in the comment form
-    await page.fill('#comment-timestamp', timestamp)
+    await page.fill('#comment-timestamp', '' + timestamp)
     await page.fill('#comment-xpath', '/html/body/div[1]/p')
     await page.fill('#comment-text', 'Test element text')
     await page.fill('#comment-title', 'Test Page Title')
@@ -632,30 +633,41 @@ test.describe('DatabaseService', () => {
     await expect(deleteResult).toHaveClass('result success')
     await expect(deleteResult).toContainText('Comment deleted successfully')
 
+    // Wait a bit to ensure the deletion is processed
+    await page.waitForTimeout(500)
+
     // After deletion, we should reload the database to ensure we're seeing the latest state
     // This will refresh the comments list
     await page.click('#load-database')
     await page.waitForSelector('#load-db-result.result.success')
 
-    // Wait for the comments list to update
-    await page.waitForTimeout(500)
+    // After reloading the database, search for our specific comment in the comments list
+    // We'll use a unique identifier in our test feedback to make it easy to find
+    const commentsList = await page.locator('#comments-list').textContent()
 
-    // Now check if our specific comment with the unique URL and feedback is still visible
-    // We'll look for the exact row that would contain our comment
+    // The comment should no longer be in the list after deletion
+    expect(commentsList).not.toContain(testFeedback)
+
+    // Also verify that the UI shows the correct number of comments
+    // If there are no comments, the list might be empty
+    const noCommentsMessage = page.locator('#no-comments-message')
     const commentRows = page.locator('#comments-list tr')
-    const count = await commentRows.count()
 
-    // Check each row to see if it contains our deleted comment
-    let foundDeletedComment = false
-    for (let i = 0; i < count; i++) {
-      const rowText = await commentRows.nth(i).textContent()
-      if (rowText && rowText.includes(testFeedback) && rowText.includes(testUrl)) {
-        foundDeletedComment = true
-        break
+    // Either we should see no comments message or the list should not contain our deleted comment
+    const rowCount = await commentRows.count()
+    if (rowCount === 0) {
+      // If no comments are left, we might see a "no comments" message
+      const noCommentsVisible = await noCommentsMessage.isVisible()
+      // This is optional as the UI might handle empty lists differently
+      if (noCommentsVisible) {
+        expect(noCommentsVisible).toBeTruthy()
+      }
+    } else {
+      // If there are still other comments, verify none of them are our deleted comment
+      for (let i = 0; i < rowCount; i++) {
+        const rowText = await commentRows.nth(i).textContent()
+        expect(rowText).not.toContain(testFeedback)
       }
     }
-
-    // We should not find our deleted comment
-    expect(foundDeletedComment).toBe(false)
   })
 })
