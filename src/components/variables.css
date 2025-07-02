@@ -1,0 +1,41 @@
+:root {
+  /* Primary colors */
+  --bc-primary: #007bff;
+  --bc-secondary: #6c757d;
+  --bc-success: #28a745;
+  --bc-danger: #dc3545;
+  --bc-warning: #ffc107;
+  --bc-info: #17a2b8;
+  
+  /* Text colors */
+  --bc-text-light: #ffffff;
+  --bc-text-dark: #212529;
+  
+  /* Background colors */
+  --bc-bg-light: #f9f9f9;
+  --bc-bg-dark: #343a40;
+  
+  /* Border colors */
+  --bc-border-light: #e9ecef;
+  --bc-border-medium: #ced4da;
+  --bc-border-dark: #6c757d;
+  
+  /* Spacing */
+  --bc-spacing-xs: 4px;
+  --bc-spacing-sm: 8px;
+  --bc-spacing-md: 16px;
+  --bc-spacing-lg: 24px;
+  
+  /* Font sizes */
+  --bc-font-xs: 0.75rem;
+  --bc-font-sm: 0.875rem;
+  --bc-font-md: 1rem;
+  --bc-font-lg: 1.25rem;
+  
+  /* Border radius */
+  --bc-radius-sm: 4px;
+  --bc-radius-md: 8px;
+  --bc-radius-lg: 16px;
+  --bc-radius-pill: 50px;
+  --bc-radius-circle: 50%;
+}

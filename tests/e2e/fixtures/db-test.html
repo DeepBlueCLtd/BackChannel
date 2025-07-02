@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BackChannel Database Test</title>
+  <link rel="stylesheet" href="db-test.css">
+</head>
+<body>
+  <div class="container">
+    <h1>BackChannel Database Test</h1>
+    
+    <!-- Step 1: Browser Support Check -->
+    <div class="section">
+      <h2>1. IndexedDB Browser Support</h2>
+      <p>Check if your browser supports IndexedDB, which is required for BackChannel to function.</p>
+      <button id="check-support">Check Browser Support</button>
+      <div class="result" id="support-result"></div>
+    </div>
+    
+    <!-- Step 2: Unsupported Browser Handling -->
+    <div class="section">
+      <h2>2. Unsupported Browser Handling</h2>
+      <p>This demonstrates how BackChannel behaves when IndexedDB is not supported.</p>
+      <button id="mock-unsupported">Mock Unsupported Browser</button>
+      <button id="restore-support">Restore Normal Support</button>
+      <div class="result" id="mock-result"></div>
+    </div>
+    
+    <!-- Step 3: Create Test Databases -->
+    <div class="section">
+      <h2>3. Create Test Databases</h2>
+      <p>Create a series of test databases, each with valid package metadata.</p>
+      
+      <!-- Database initialization for Playwright tests -->
+      <div class="panel" style="margin-bottom: 15px;">
+        <h3>Initialize Database</h3>
+        <div class="form-group">
+          <button id="init-db">Initialize Database</button>
+        </div>
+        <div class="result" id="init-result"></div>
+      </div>
+      
+      <div>
+        <h3>Test Database Templates</h3>
+        <select id="test-template">
+          <option value="standard">Standard Test Databases (3)</option>
+          <option value="many">Many Test Databases (10)</option>
+          <option value="custom">Custom Test Database</option>
+        </select>
+      </div>
+      <div class="result" id="active-package-result"></div>
+      
+      <div id="custom-package-form" style="display: none; margin-top: 15px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
+        <h4>Custom Package Details</h4>
+        <p><em>Note: Database ID will be auto-generated using timestamp</em></p>
+        
+        <label for="package-name">Package Name:</label>
+        <input type="text" id="package-name" value="Custom Package">
+        
+        <label for="package-version">Version:</label>
+        <input type="text" id="package-version" value="1.0.0">
+        
+        <label for="package-author">Author:</label>
+        <input type="text" id="package-author" value="Test Author">
+        
+        <label for="package-description">Description:</label>
+        <input type="text" id="package-description" value="Custom test package">
+        
+        <label for="package-root-url">Root URL:</label>
+        <input type="text" id="package-root-url" value="https://example.com">
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <button id="create-test-dbs">Create Test Databases</button>
+        <button id="clear-test-dbs">Clear Test Databases</button>
+      </div>
+      
+      <div class="result" id="test-db-result"></div>
+    </div>
+    
+    <!-- Step 5: List Databases -->
+    <div class="section">
+      <h2>5. List Databases</h2>
+      <p>List all BackChannel databases and their package information.</p>
+      
+      <div>
+        <button id="list-databases">List All Databases</button>
+        <button id="refresh-databases">Refresh List</button>
+      </div>
+      
+      <div class="result" id="list-db-result"></div>
+      
+      <div id="database-list-container" style="display: none; margin-top: 15px;">
+        <h3>Available Databases</h3>
+        <table id="database-table" class="data-table">
+          <thead>
+            <tr>
+              <th>Database Name</th>
+              <th>Package ID</th>
+              <th>Package Name</th>
+              <th>Root URL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="database-list">
+            <!-- Database list will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Step 6: Load Database -->
+    <div class="section">
+      <h2>6. Load Database</h2>
+      <p>Load and display a specific database and its package information.</p>
+      
+      <div>
+        <label for="load-db-id">Database ID:</label>
+        <input type="text" id="load-db-id" placeholder="Enter database ID">
+        <button id="load-database">Load Database</button>
+      </div>
+      
+      <div class="result" id="load-db-result"></div>
+      
+      <div id="loaded-db-container" style="display: none; margin-top: 15px;">
+        <h3>Loaded Database: <span id="loaded-db-name"></span></h3>
+        
+        <div class="panel">
+          <h4>Package Details</h4>
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <th>Package ID</th>
+                <td id="loaded-pkg-id"></td>
+              </tr>
+              <tr>
+                <th>Name</th>
+                <td id="loaded-pkg-name"></td>
+              </tr>
+              <tr>
+                <th>Version</th>
+                <td id="loaded-pkg-version"></td>
+              </tr>
+              <tr>
+                <th>Author</th>
+                <td id="loaded-pkg-author"></td>
+              </tr>
+              <tr>
+                <th>Description</th>
+                <td id="loaded-pkg-description"></td>
+              </tr>
+              <tr>
+                <th>Root URL</th>
+                <td id="loaded-pkg-url"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Step 7: Search for Package by URL -->
+    <div class="section">
+      <h2>7. Search for Package by URL</h2>
+      <p>Find and load a feedback package that matches a specific URL pattern.</p>
+      
+      <div>
+        <label for="search-url">URL Pattern:</label>
+        <input type="text" id="search-url" placeholder="Enter URL or pattern" style="width: 300px;">
+        <button id="search-packages">Search Packages</button>
+      </div>
+      
+      <!-- Test active package for Playwright tests -->
+      <div style="margin-top: 15px;">
+        <label for="test-url">Test URL:</label>
+        <input type="text" id="test-url" placeholder="Enter URL to test" style="width: 300px;">
+        <button id="test-active-package">Test Active Package</button>
+      </div>
+      
+      <div class="result" id="search-result"></div>
+      
+      <div id="search-results-container" style="display: none; margin-top: 15px;">
+        <h3>Matching Packages</h3>
+        <table id="search-results-table" class="data-table">
+          <thead>
+            <tr>
+              <th>Database ID</th>
+              <th>Package Name</th>
+              <th>Root URL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="search-results-list">
+            <!-- Search results will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Step 8: Manually Create Package -->
+    <div class="section">
+      <h2>8. Manually Create Package</h2>
+      <p>Create a new feedback package with custom metadata.</p>
+      
+      <div class="panel">
+        <h4>Package Information</h4>
+        <form id="create-package-form">
+          <!-- Field for Playwright tests -->
+          <div class="form-group">
+            <label for="package-id">Package ID:</label>
+            <input type="text" id="package-id" style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="package-name">Package Name:</label>
+            <input type="text" id="package-name" required style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="package-version">Version:</label>
+            <input type="text" id="package-version" value="1.0.0" required style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="package-author">Author:</label>
+            <input type="text" id="package-author" required style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="package-description">Description:</label>
+            <textarea id="package-description" rows="3" style="display: block; visibility: visible;"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="package-root-url">Root URL:</label>
+            <input type="text" id="package-root-url" required style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" id="create-package">Create Package</button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="result" id="create-pkg-result"></div>
+    </div>
+    
+    <!-- Step 9: Add/Edit Comments -->
+    <div class="section">
+      <h2>9. Add/Edit Comments</h2>
+      <p>Add or edit comments for the currently loaded feedback package.</p>
+      
+      <div id="comments-container" style="display: none;">
+        <h4>Add/Edit Comment</h4>
+        <form id="add-comment-form">
+          <!-- Fields for Playwright tests -->
+          <div class="form-group">
+            <label for="comment-timestamp">Timestamp:</label>
+            <input type="number" id="comment-timestamp" style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="comment-xpath">XPath:</label>
+            <input type="text" id="comment-xpath" style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="comment-text">Element Text:</label>
+            <input type="text" id="comment-text" style="display: block; visibility: visible;">
+          </div>
+          
+          <div class="form-group">
+            <label for="comment-title">Document Title:</label>
+            <input type="text" id="comment-title" style="display: block; visibility: visible;">
+          </div>
+          
+          <!-- Visible fields -->
+          <div class="form-group">
+            <label for="comment-url">URL:</label>
+            <input type="text" id="comment-url" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="comment-feedback">Comment:</label>
+            <textarea id="comment-feedback" rows="3" required></textarea>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" id="add-comment">Add Comment</button>
+            <button type="button" id="cancel-edit">Cancel Edit</button>
+          </div>
+        </form>
+        
+        <div class="result" id="comment-result"></div>
+        
+        <div id="comments-list-container" style="display: none; margin-top: 15px;">
+          <h4>Comments</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Comment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="comments-list">
+              <!-- Comments will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="result" id="no-package-loaded-message">
+        Please load a package first to manage comments.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { DatabaseService } from '../../../src/services/db.js';
+    
+    // Note: Using DatabaseService.getAllBackChannelDatabases() static method instead of local implementation
+    
+    // Define test package templates (without IDs - they will be generated at creation time)
+    const standardTestPackages = [
+      {
+        name: 'Example Site Package',
+        version: '1.0.0',
+        author: 'Test User',
+        description: 'Test package for example.com',
+        rootURL: 'https://example.com'
+      },
+      {
+        name: 'Second Site Package',
+        version: '1.0.0',
+        author: 'Test User',
+        description: 'Test package for second.com',
+        rootURL: 'https://second.com'
+      },
+      {
+        name: 'Third Site Package',
+        version: '1.0.0',
+        author: 'Test User',
+        description: 'Test package for third.com/subpath',
+        rootURL: 'https://third.com/subpath'
+      }
+    ];
+    
+    // Generate many test packages
+    function generateManyTestPackages(count = 10) {
+      const packages = [];
+      for (let i = 1; i <= count; i++) {
+        packages.push({
+          name: `Site ${i} Package`,
+          version: '1.0.0',
+          author: 'Test User',
+          description: `Test package for site${i}.com`,
+          rootURL: `https://site${i}.com`
+        });
+      }
+      return packages;
+    }
+    
+    // Store original indexedDB reference for restoring later
+    const originalIndexedDB = window.indexedDB;
+    
+    // Initialize database handler for Playwright tests
+    document.getElementById('init-db').addEventListener('click', async () => {
+      try {
+        const dbName = 'Test Database';
+        const resultElement = document.getElementById('init-result');
+        resultElement.textContent = 'Initializing database...';
+        resultElement.className = 'result';
+        
+        // Create a database service with the specified name
+        const metadata = {
+          name: dbName,
+          version: '1.0.0',
+          author: 'Test User',
+          description: 'Test database created for Playwright tests',
+          rootURL: 'https://example.com'
+        }
+        const dbService = new DatabaseService(dbName, metadata);
+        
+        // Initialize with a test package
+        const success = await dbService.init();
+        
+        if (success) {
+          resultElement.textContent = `Database '${dbName}' initialized successfully.`;
+          resultElement.className = 'result success';
+          
+          // Store the current database service and package for later use
+          currentDbService = dbService;
+          currentPackage = await dbService.getPackage();
+          
+          // Show the comments container if we have a package loaded
+          if (currentPackage) {
+            document.getElementById('comments-container').style.display = 'block';
+            await loadComments();
+          }
+        } else {
+          resultElement.textContent = `Failed to initialize database '${dbName}'.`;
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('init-result');
+        resultElement.textContent = `Error initializing database: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Step 1: Check browser support for IndexedDB
+    document.getElementById('check-support').addEventListener('click', () => {
+      try {
+        // Use the static method to check support
+        const isSupported = DatabaseService.isSupported();
+        
+        const resultElement = document.getElementById('support-result');
+        if (isSupported) {
+          resultElement.textContent = 'IndexedDB is supported. BackChannel can function properly.';
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = 'IndexedDB is not supported. BackChannel will not function properly.';
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('support-result');
+        resultElement.textContent = `Error checking support: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Step 2: Mock unsupported browser
+    document.getElementById('mock-unsupported').addEventListener('click', () => {
+      try {
+        // Save the original indexedDB object if not already saved
+        
+        // Mock unsupported browser by setting indexedDB to undefined
+        window.indexedDB = undefined;
+        
+        // Create a database service to test
+        const db = new DatabaseService('mock-test');
+        
+        // Check if it correctly detects lack of support
+        const resultElement = document.getElementById('mock-result');
+        if (!db.isSupported) {
+          resultElement.textContent = 'Successfully mocked unsupported browser. DatabaseService correctly detects that IndexedDB is not supported.';
+          resultElement.className = 'result success';
+          
+          // Try to initialize and show the graceful failure
+          db.init().then(success => {
+            resultElement.textContent += '\n\nAttempted to initialize database: ' + 
+              (success ? 'Unexpectedly succeeded!' : 'Failed gracefully as expected.');
+          });
+        } else {
+          resultElement.textContent = 'Failed to mock unsupported browser. DatabaseService still thinks IndexedDB is supported.';
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = `Error mocking unsupported browser: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Restore normal browser support
+    document.getElementById('restore-support').addEventListener('click', () => {
+      try {
+        // Restore the original indexedDB object
+        window.indexedDB = originalIndexedDB;
+        
+        // Verify support is restored
+        const isSupported = DatabaseService.isSupported();
+        
+        const resultElement = document.getElementById('mock-result');
+        if (isSupported) {
+          resultElement.textContent = 'Successfully restored IndexedDB support.';
+          resultElement.className = 'result success';
+        } else {
+          resultElement.textContent = 'Failed to restore IndexedDB support.';
+          resultElement.className = 'result error';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('mock-result');
+        resultElement.textContent = `Error restoring support: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Toggle custom package form visibility based on selection
+    document.getElementById('test-template').addEventListener('change', (event) => {
+      const customForm = document.getElementById('custom-package-form');
+      customForm.style.display = event.target.value === 'custom' ? 'block' : 'none';
+    });
+    
+    // Step 3: Create test databases
+    document.getElementById('create-test-dbs').addEventListener('click', async () => {
+      try {
+        const resultElement = document.getElementById('test-db-result');
+        resultElement.textContent = 'Creating test databases...';
+        resultElement.className = 'result';
+        
+        // Determine which package set to use
+        const templateType = document.getElementById('test-template').value;
+        let packagesToCreate = [];
+        
+        switch (templateType) {
+          case 'standard':
+            packagesToCreate = standardTestPackages;
+            break;
+          case 'many':
+            packagesToCreate = generateManyTestPackages(10);
+            break;
+          case 'custom':
+            // Create a single custom package from form inputs (without ID - will be generated)
+            packagesToCreate = [{
+              name: document.getElementById('package-name').value,
+              version: document.getElementById('package-version').value,
+              author: document.getElementById('package-author').value,
+              description: document.getElementById('package-description').value,
+              rootURL: document.getElementById('package-root-url').value
+            }];
+            break;
+        }
+        
+        // Create a separate database for each package
+        let successCount = 0;
+        const results = [];
+        
+        for (const packageData of packagesToCreate) {
+          try {
+            // Create a new database instance with the package data
+            const dbService = new DatabaseService(packageData.id, packageData);
+
+            // introduce v-short delay, so they get new id (based on timestamp)
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            // Initialize the database with the package data
+            const initSuccess = await dbService.init();
+            
+            if (initSuccess) {
+              successCount++;
+              results.push(`✓ Created database for '${packageData.name}' (${packageData.id})`);
+              
+              // Verify the package was stored by retrieving it
+              try {
+                const verifyPackage = await dbService.getPackage();
+                if (!verifyPackage) {
+                  results.push(`  ⚠️ Warning: Could not verify package in database ${packageData.id}`);
+                }
+              } catch (verifyError) {
+                results.push(`  ⚠️ Error verifying package: ${verifyError.message}`);
+              }
+            } else {
+              results.push(`✗ Failed to create database for '${packageData.name}' (${packageData.id})`);
+            }
+          } catch (dbError) {
+            results.push(`✗ Error creating database for '${packageData.name}': ${dbError.message}`);
+          }
+        }
+        
+        // Display results
+        resultElement.innerHTML = `<strong>Created ${successCount}/${packagesToCreate.length} databases:</strong><br>`;
+        resultElement.innerHTML += results.join('<br>');
+        resultElement.className = successCount > 0 ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('test-db-result');
+        resultElement.textContent = `Error creating test databases: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Clear test databases
+    document.getElementById('clear-test-dbs').addEventListener('click', async () => {
+      try {
+        const resultElement = document.getElementById('test-db-result');
+        resultElement.textContent = 'Clearing test databases...';
+        resultElement.className = 'result';
+        
+        // Get all available databases
+        const databases = await indexedDB.databases();
+        const feedbackDatabases = databases.filter(db => db.name.startsWith('bc-storage-'));
+        
+        if (feedbackDatabases.length === 0) {
+          resultElement.textContent = 'No BackChannel databases found to clear.';
+          return;
+        }
+        
+        // Delete each database
+        let deletedCount = 0;
+        const results = [];
+        
+        for (const dbInfo of feedbackDatabases) {
+          try {
+            // Request to delete the database
+            const deleteRequest = indexedDB.deleteDatabase(dbInfo.name);
+            
+            // Set up promise to track completion
+            await new Promise((resolve, reject) => {
+              deleteRequest.onsuccess = () => {
+                deletedCount++;
+                results.push(`✓ Deleted database '${dbInfo.name}'`);
+                resolve();
+              };
+              
+              deleteRequest.onerror = (event) => {
+                results.push(`✗ Failed to delete database '${dbInfo.name}': ${event.target.error}`);
+                reject(new Error(`Failed to delete database '${dbInfo.name}'`));
+              };
+            });
+          } catch (dbError) {
+            results.push(`✗ Error deleting database '${dbInfo.name}': ${dbError.message}`);
+          }
+        }
+        
+        // Display results
+        resultElement.innerHTML = `<strong>Deleted ${deletedCount}/${feedbackDatabases.length} databases:</strong><br>`;
+        resultElement.innerHTML += results.join('<br>');
+        resultElement.className = deletedCount > 0 ? 'result success' : 'result error';
+      } catch (error) {
+        const resultElement = document.getElementById('test-db-result');
+        resultElement.textContent = `Error clearing test databases: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Step 5: List databases
+    async function listDatabases() {
+      try {
+        const resultElement = document.getElementById('list-db-result');
+        resultElement.textContent = 'Retrieving databases...';
+        resultElement.className = 'result';
+        
+        // Get all BackChannel databases using the static method
+        const feedbackDatabases = await DatabaseService.getAllBackChannelDatabases();
+        
+        if (feedbackDatabases.length === 0) {
+          resultElement.textContent = 'No BackChannel databases found.';
+          document.getElementById('database-list-container').style.display = 'none';
+          return;
+        }
+        
+        // Clear previous list
+        const databaseList = document.getElementById('database-list');
+        databaseList.innerHTML = '';
+        
+        // Process each database to get package info
+        let loadedCount = 0;
+        const results = [];
+        
+        for (const dbName of feedbackDatabases) {
+          try {
+            // Extract the ID from the database name (bc-storage-{id})
+            const dbId = dbName.replace('bc-storage-', '');
+
+            console.log('opening', dbId)
+            
+            // Create a database service to load the package
+            const dbService = new DatabaseService(dbId);
+            await dbService.init();
+            
+            // Get the package from the database
+            let packageData;
+            try {
+              packageData = await dbService.getPackage();
+            } catch (packageError) {
+              // If there's an error getting the package, create a placeholder
+              packageData = {
+                id: 'unknown',
+                name: 'Error: ' + packageError.message,
+                rootURL: 'N/A'
+              };
+              results.push(`⚠️ Error loading package from database '${dbId}': ${packageError.message}`);
+            }
+            
+            if (packageData) {
+              loadedCount++;
+              
+              // Create a row for this database
+              const row = document.createElement('tr');
+              
+              // Database name cell
+              const dbNameCell = document.createElement('td');
+              dbNameCell.textContent = dbName;
+              row.appendChild(dbNameCell);
+              
+              // Package ID cell
+              const packageIdCell = document.createElement('td');
+              packageIdCell.textContent = packageData.id || 'N/A';
+              row.appendChild(packageIdCell);
+              
+              // Package name cell
+              const packageNameCell = document.createElement('td');
+              packageNameCell.textContent = packageData.name || 'N/A';
+              row.appendChild(packageNameCell);
+              
+              // Root URL cell
+              const rootURLCell = document.createElement('td');
+              rootURLCell.textContent = packageData.rootURL || 'N/A';
+              row.appendChild(rootURLCell);
+              
+              // Actions cell
+              const actionsCell = document.createElement('td');
+              
+              // Load button
+              const loadButton = document.createElement('button');
+              loadButton.textContent = 'Load';
+              loadButton.className = 'action-button';
+              loadButton.setAttribute('data-db-id', dbId);
+              loadButton.addEventListener('click', (event) => {
+                const dbIdToLoad = event.target.getAttribute('data-db-id');
+                // Set the database ID in the input field and load it
+                document.getElementById('load-db-id').value = dbIdToLoad;
+                loadDatabase(dbIdToLoad);
+              });
+              actionsCell.appendChild(loadButton);
+              
+              // Delete button
+              const deleteButton = document.createElement('button');
+              deleteButton.textContent = 'Delete';
+              deleteButton.className = 'action-button';
+              deleteButton.style.backgroundColor = '#f44336';
+              deleteButton.setAttribute('data-db-id', dbId);
+              deleteButton.addEventListener('click', async (event) => {
+                const dbIdToDelete = event.target.getAttribute('data-db-id');
+                if (confirm(`Are you sure you want to delete database ${dbIdToDelete}?`)) {
+                  try {
+                    const deleteRequest = indexedDB.deleteDatabase(`bc-storage-${dbIdToDelete}`);
+                    deleteRequest.onsuccess = () => {
+                      // Refresh the list after deletion
+                      listDatabases();
+                    };
+                    deleteRequest.onerror = (event) => {
+                      alert(`Error deleting database: ${event.target.error}`);
+                    };
+                  } catch (error) {
+                    alert(`Error deleting database: ${error.message}`);
+                  }
+                }
+              });
+              actionsCell.appendChild(deleteButton);
+              
+              row.appendChild(actionsCell);
+              databaseList.appendChild(row);
+            }
+          } catch (dbError) {
+            results.push(`⚠️ Error processing database '${dbInfo.name}': ${dbError.message}`);
+          }
+        }
+        
+        // Display results
+        resultElement.innerHTML = `<strong>Found ${loadedCount}/${feedbackDatabases.length} databases with packages</strong>`;
+        if (results.length > 0) {
+          resultElement.innerHTML += '<br>' + results.join('<br>');
+          resultElement.className = 'result error';
+        } else {
+          resultElement.className = 'result success';
+        }
+
+        // Show the database list container
+        document.getElementById('database-list-container').style.display = 'block';
+      } catch (error) {
+        const resultElement = document.getElementById('list-db-result');
+        resultElement.textContent = `Error listing databases: ${error.message}`;
+        resultElement.className = 'result error';
+        document.getElementById('database-list-container').style.display = 'none';
+      }
+    }
+    
+    // List databases button click handler
+    document.getElementById('list-databases').addEventListener('click', listDatabases);
+    
+    // Refresh databases button click handler
+    document.getElementById('refresh-databases').addEventListener('click', listDatabases);
+    
+    // Step 6: Load database
+    async function loadDatabase(dbId) {
+      try {
+        console.log('about to load database', dbId)
+        const resultElement = document.getElementById('load-db-result');
+        resultElement.textContent = `Loading database ${dbId}...`;
+        resultElement.className = 'result';
+        
+        // First check if the database exists
+        const exists = await DatabaseService.databaseExists(dbId);
+        if (!exists) {
+          resultElement.textContent = `Database ${dbId} does not exist.`;
+          resultElement.className = 'result error';
+          document.getElementById('loaded-db-container').style.display = 'none';
+          return;
+        }
+        
+        // Create a database service to load the package
+        const dbService = new DatabaseService(dbId);
+        const initSuccess = await dbService.init();
+        
+        if (!initSuccess) {
+          resultElement.textContent = `Failed to initialize database ${dbId}.`;
+          resultElement.className = 'result error';
+          document.getElementById('loaded-db-container').style.display = 'none';
+          return;
+        }
+        
+        // Get the package from the database
+        try {
+          const packageData = await dbService.getPackage();
+          
+          if (!packageData) {
+            resultElement.textContent = `No package found in database ${dbId}.`;
+            resultElement.className = 'result error';
+            document.getElementById('loaded-db-container').style.display = 'none';
+            return;
+          }
+          
+          // Display the database name
+          document.getElementById('loaded-db-name').textContent = `bc-storage-${dbId}`;
+          
+          // Display package details
+          document.getElementById('loaded-pkg-id').textContent = packageData.id || 'N/A';
+          document.getElementById('loaded-pkg-name').textContent = packageData.name || 'N/A';
+          document.getElementById('loaded-pkg-version').textContent = packageData.version || 'N/A';
+          document.getElementById('loaded-pkg-author').textContent = packageData.author || 'N/A';
+          document.getElementById('loaded-pkg-description').textContent = packageData.description || 'N/A';
+          document.getElementById('loaded-pkg-url').textContent = packageData.rootURL || 'N/A';
+          
+          // Show the loaded database container
+          document.getElementById('loaded-db-container').style.display = 'block';
+          
+          // Store current database service and package for comments functionality
+          currentDbService = dbService;
+          currentPackage = packageData;
+          
+          // Enable comments functionality
+          document.getElementById('comments-container').style.display = 'block';
+          document.getElementById('no-package-loaded-message').style.display = 'none';
+          
+          // Load comments for this package
+          await loadComments();
+          
+          resultElement.textContent = `Successfully loaded database ${dbId}.`;
+          resultElement.className = 'result success';
+        } catch (packageError) {
+          resultElement.textContent = `Error loading package from database ${dbId}: ${packageError.message}`;
+          resultElement.className = 'result error';
+          document.getElementById('loaded-db-container').style.display = 'none';
+        }
+      } catch (error) {
+        const resultElement = document.getElementById('load-db-result');
+        resultElement.textContent = `Error loading database ${dbId}: ${error.message}`;
+        resultElement.className = 'result error';
+        document.getElementById('loaded-db-container').style.display = 'none';
+      }
+    }
+    
+    // Step 8: Create package manually
+    async function createPackageManually(event) {
+      event.preventDefault(); // Prevent form submission
+      
+      try {
+        const resultElement = document.getElementById('create-pkg-result');
+        resultElement.textContent = 'Creating package...';
+        resultElement.className = 'result';
+        
+        // Get form values
+        const packageName = document.getElementById('package-name').value.trim();
+        const packageVersion = document.getElementById('package-version').value.trim();
+        const packageAuthor = document.getElementById('package-author').value.trim();
+        const packageDescription = document.getElementById('package-description').value.trim();
+        const packageRootUrl = document.getElementById('package-root-url').value.trim();
+        
+        // Validate required fields
+        if (!packageName || !packageVersion || !packageAuthor || !packageRootUrl) {
+          resultElement.textContent = 'Please fill in all required fields.';
+          resultElement.className = 'result error';
+          return;
+        }
+        
+        // Create package metadata
+        const packageMetadata = {
+          name: packageName,
+          version: packageVersion,
+          author: packageAuthor,
+          description: packageDescription,
+          rootURL: packageRootUrl
+        };
+        
+        // Create a new database service (ID will be auto-generated)
+        const dbService = new DatabaseService(undefined, packageMetadata);
+        
+        // Initialize with package data
+        const initSuccess = await dbService.init();
+        
+        if (!initSuccess) {
+          resultElement.textContent = 'Failed to create package database.';
+          resultElement.className = 'result error';
+          return;
+        }
+        
+        // Get the database ID that was auto-generated
+        const dbId = dbService.dbId;
+        
+        // Success message
+        resultElement.textContent = `Successfully created package database with ID: ${dbId}`;
+        resultElement.className = 'result success';
+        
+        // Reset form
+        document.getElementById('create-package-form').reset();
+        
+        // Refresh the database list to show the new database
+        await listDatabases();
+        
+        // Load the newly created database
+        await loadDatabase(dbId);
+      } catch (error) {
+        const resultElement = document.getElementById('create-pkg-result');
+        resultElement.textContent = `Error creating package: ${error.message}`;
+        resultElement.className = 'result error';
+        console.error('Error creating package:', error);
+      }
+    }
+    
+    // Global variables
+    let currentDbService = null;
+    let currentPackage = null;
+    let currentComments = [];
+    
+    // Step 9: Comments functionality
+    
+    // Load comments for the current package
+    async function loadComments() {
+      if (!currentDbService || !currentPackage) {
+        document.getElementById('comment-result').textContent = 'No package loaded.';
+        document.getElementById('comment-result').className = 'result error';
+        document.getElementById('comments-list-container').style.display = 'none';
+        return;
+      }
+      
+      try {
+        // Get comments from the database
+        const comments = await currentDbService.getAllComments();
+        currentComments = comments || [];
+        
+        // Display comments
+        displayComments();
+        
+        // Clear any previous result message
+        document.getElementById('comment-result').textContent = '';
+        document.getElementById('comment-result').className = 'result';
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error loading comments: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+        document.getElementById('comments-list-container').style.display = 'none';
+      }
+    }
+    
+    // Display comments in the UI
+    function displayComments() {
+      const commentsList = document.getElementById('comments-list');
+      commentsList.innerHTML = '';
+      
+      if (currentComments.length === 0) {
+        document.getElementById('comments-list-container').style.display = 'none';
+        return;
+      }
+      
+      // Show the comments list container
+      document.getElementById('comments-list-container').style.display = 'block';
+      
+      // Add each comment to the table
+      currentComments.forEach((comment) => {
+        const row = document.createElement('tr');
+        
+        // URL cell
+        const urlCell = document.createElement('td');
+        urlCell.textContent = comment.pageUrl || comment.url || 'N/A';
+        row.appendChild(urlCell);
+        
+        // Comment text cell
+        const textCell = document.createElement('td');
+        textCell.textContent = comment.feedback || comment.text || '';
+        row.appendChild(textCell);
+        
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        
+        // Edit button
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.className = 'action-button';
+        editButton.setAttribute('data-comment-timestamp', comment.timestamp);
+        editButton.addEventListener('click', (event) => {
+          const timestamp = event.target.getAttribute('data-comment-timestamp');
+          editComment(timestamp);
+        });
+        actionsCell.appendChild(editButton);
+        
+        // Delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'action-button';
+        deleteButton.style.backgroundColor = '#f44336';
+        deleteButton.setAttribute('data-comment-timestamp', comment.timestamp);
+        deleteButton.addEventListener('click', (event) => {
+          const timestamp = event.target.getAttribute('data-comment-timestamp');
+          deleteComment(timestamp);
+        });
+        actionsCell.appendChild(deleteButton);
+        
+        row.appendChild(actionsCell);
+        commentsList.appendChild(row);
+      });
+    }
+    
+    // Add a new comment
+    async function addComment(event) {
+      event.preventDefault(); // Prevent form submission
+      
+      if (!currentDbService || !currentPackage) {
+        document.getElementById('comment-result').textContent = 'No package loaded.';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        const commentUrl = document.getElementById('comment-url').value.trim();
+        const commentFeedback = document.getElementById('comment-feedback').value.trim();
+        
+        // Validate required fields
+        if (!commentUrl || !commentFeedback) {
+          document.getElementById('comment-result').textContent = 'Please fill in all required fields.';
+          document.getElementById('comment-result').className = 'result error';
+          return;
+        }
+        
+        // Get values from hidden fields for Playwright tests
+        const timestampField = document.getElementById('comment-timestamp');
+        const xpathField = document.getElementById('comment-xpath');
+        const elementTextField = document.getElementById('comment-text');
+        const titleField = document.getElementById('comment-title');
+        
+        // Create comment object
+        const newComment = {
+          pageUrl: commentUrl,
+          feedback: commentFeedback,
+          timestamp: timestampField && timestampField.value ? parseInt(timestampField.value) : Date.now(),
+          elementText: elementTextField && elementTextField.value ? elementTextField.value : '',
+          xpath: xpathField && xpathField.value ? xpathField.value : '',
+          documentTitle: titleField && titleField.value ? titleField.value : document.title
+        };
+        
+        // Add comment to the database
+        await currentDbService.addComment(newComment);
+        
+        // Reload comments
+        await loadComments();
+        
+        // Success message
+        document.getElementById('comment-result').textContent = 'Comment added successfully.';
+        document.getElementById('comment-result').className = 'result success';
+        
+        // Reset form
+        document.getElementById('add-comment-form').reset();
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error adding comment: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+      }
+    }
+    
+    // Edit a comment
+    function editComment(timestamp) {
+      const comment = currentComments.find(c => c.timestamp == timestamp);
+      if (!comment) return;
+      
+      // Fill the form with the comment data
+      document.getElementById('comment-url').value = comment.pageUrl || comment.url || '';
+      document.getElementById('comment-text').value = comment.feedback || comment.text || '';
+      
+      // Change the form to edit mode
+      const addButton = document.getElementById('add-comment');
+      addButton.textContent = 'Update Comment';
+      addButton.setAttribute('data-edit-timestamp', timestamp);
+      
+      // Focus on the form
+      document.getElementById('comment-url').focus();
+    }
+    
+    // Delete a comment
+    async function deleteComment(timestamp) {
+      if (!timestamp) return;
+      
+      if (!confirm('Are you sure you want to delete this comment?')) return;
+      
+      try {
+        // Remove the comment from the database
+        await currentDbService.deleteComment(timestamp);
+        
+        // Reload comments
+        await loadComments();
+        
+        // Success message
+        document.getElementById('comment-result').textContent = 'Comment deleted successfully.';
+        document.getElementById('comment-result').className = 'result success';
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error deleting comment: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+      }
+    }
+
+    // Load database button click handler
+    document.getElementById('load-database').addEventListener('click', () => {
+      const dbId = document.getElementById('load-db-id').value.trim();
+      if (!dbId) {
+        const resultElement = document.getElementById('load-db-result');
+        resultElement.textContent = 'Please enter a database ID.';
+        resultElement.className = 'result error';
+        return;
+      }
+      loadDatabase(dbId);
+    });
+    
+    // Test active package for Playwright tests
+    document.getElementById('test-active-package').addEventListener('click', async () => {
+      try {
+        const resultElement = document.getElementById('search-result');
+        resultElement.textContent = 'Testing active package...';
+        resultElement.className = 'result';
+        
+        const testUrl = document.getElementById('test-url').value.trim();
+        if (!testUrl) {
+          resultElement.textContent = 'Please enter a URL to test.';
+          resultElement.className = 'result error';
+          return;
+        }
+        
+        // Use the static method to search for a package by URL
+        const matchingDatabases = await DatabaseService.searchByUrl(testUrl);
+        
+        if (matchingDatabases.length === 0) {
+          resultElement.textContent = `No active package found for URL: ${testUrl}`;
+          resultElement.className = 'result warning';
+          return;
+        }
+        
+        // Load the first matching database
+        const dbId = matchingDatabases[0].dbId;
+        const dbService = new DatabaseService(dbId);
+        await dbService.init();
+        const pkg = await dbService.getPackage();
+        
+        // Store the current database service and package
+        currentDbService = dbService;
+        currentPackage = pkg;
+        
+        // Show the comments container
+        document.getElementById('comments-container').style.display = 'block';
+        await loadComments();
+        
+        // Display result
+        resultElement.innerHTML = `Active package found:<br>
+          <strong>Name:</strong> ${pkg.name}<br>
+          <strong>Root URL:</strong> ${pkg.rootURL}<br>
+          <strong>Database ID:</strong> ${dbId}`;
+        resultElement.className = 'result success';
+      } catch (error) {
+        const resultElement = document.getElementById('active-package-result');
+        resultElement.textContent = `Error testing active package: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    });
+    
+    // Step 7: Search for package by URL
+    async function searchPackagesByUrl() {
+      try {
+        const urlPattern = document.getElementById('search-url').value.trim();
+        if (!urlPattern) {
+          const resultElement = document.getElementById('search-result');
+          resultElement.textContent = 'Please enter a URL pattern to search for.';
+          resultElement.className = 'result error';
+          document.getElementById('search-results-container').style.display = 'none';
+          return;
+        }
+        
+        const resultElement = document.getElementById('search-result');
+        resultElement.textContent = `Searching for packages matching URL pattern: ${urlPattern}...`;
+        resultElement.className = 'result';
+        
+        // Clear previous search results
+        const searchResultsList = document.getElementById('search-results-list');
+        searchResultsList.innerHTML = '';
+        
+        // Use the static searchByUrl method from DatabaseService
+        const matchingPackages = await DatabaseService.searchByUrl(urlPattern);
+        
+        if (matchingPackages.length === 0) {
+          resultElement.textContent = `No packages found matching URL pattern: ${urlPattern}`;
+          resultElement.className = 'result warning';
+          document.getElementById('search-results-container').style.display = 'none';
+          return;
+        }
+
+        // Populate the search results table
+        for (const match of matchingPackages) {
+          const row = document.createElement('tr');
+          
+          // Database ID cell
+          const dbIdCell = document.createElement('td');
+          dbIdCell.textContent = match.dbId;
+          row.appendChild(dbIdCell);
+          
+          // Package name cell
+          const nameCell = document.createElement('td');
+          nameCell.textContent = match.packageData.name || 'N/A';
+          row.appendChild(nameCell);
+          
+          // Root URL cell
+          const urlCell = document.createElement('td');
+          urlCell.textContent = match.packageData.rootURL || 'N/A';
+          row.appendChild(urlCell);
+          
+          // Actions cell
+          const actionsCell = document.createElement('td');
+          
+          // Load button
+          const loadButton = document.createElement('button');
+          loadButton.textContent = 'Load';
+          loadButton.className = 'action-button';
+          loadButton.setAttribute('data-db-id', match.dbId);
+          loadButton.addEventListener('click', (event) => {
+            const dbIdToLoad = event.target.getAttribute('data-db-id');
+            document.getElementById('load-db-id').value = dbIdToLoad;
+            loadDatabase(dbIdToLoad);
+            
+            // Scroll to the loaded database section
+            document.querySelector('div.section:nth-child(6)').scrollIntoView({ behavior: 'smooth' });
+          });
+          actionsCell.appendChild(loadButton);
+          
+          row.appendChild(actionsCell);
+          searchResultsList.appendChild(row);
+        }
+        
+        // Show the search results container
+        document.getElementById('search-results-container').style.display = 'block';
+        
+        resultElement.textContent = `Found ${matchingPackages.length} package(s) matching URL pattern: ${urlPattern}`;
+        resultElement.className = 'result success';
+      } catch (error) {
+        const resultElement = document.getElementById('search-result');
+        resultElement.textContent = `Error searching for packages: ${error.message}`;
+        resultElement.className = 'result error';
+        document.getElementById('search-results-container').style.display = 'none';
+      }
+    }
+    
+    // Search packages button click handler
+    document.getElementById('search-packages').addEventListener('click', searchPackagesByUrl);
+    
+    // Create package form submission handler
+    document.getElementById('create-package-form').addEventListener('submit', createPackageManually);
+    
+    // Add comment form submit handler
+    document.getElementById('add-comment-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      // Check if we're in edit mode
+      const addButton = document.getElementById('add-comment');
+      const editTimestamp = addButton.getAttribute('data-edit-timestamp');
+      
+      if (editTimestamp !== null) {
+        // We're updating an existing comment
+        await updateComment(editTimestamp, event);
+      } else {
+        // We're adding a new comment
+        await addComment(event);
+      }
+    });
+    
+    // Cancel edit button click handler
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      // Reset the form
+      document.getElementById('add-comment-form').reset();
+      
+      // Change the button back to Add Comment
+      const addButton = document.getElementById('add-comment');
+      addButton.textContent = 'Add Comment';
+      addButton.removeAttribute('data-edit-mode');
+      addButton.removeAttribute('data-comment-timestamp');
+      
+      // Hide the cancel button
+      document.getElementById('cancel-edit').style.display = 'none';
+    });
+    
+    // Update comment function
+    async function updateComment(timestamp, event) {
+      event.preventDefault(); // Prevent form submission
+      
+      if (!currentDbService || !currentPackage || !timestamp) {
+        document.getElementById('comment-result').textContent = 'Invalid comment or no package loaded.';
+        document.getElementById('comment-result').className = 'result error';
+        return;
+      }
+      
+      try {
+        // Get the existing comment
+        const existingComment = await currentDbService.getComment(parseInt(timestamp));
+        if (!existingComment) {
+          document.getElementById('comment-result').textContent = 'Comment not found.';
+          document.getElementById('comment-result').className = 'result error';
+          return;
+        }
+        
+        const commentUrl = document.getElementById('comment-url').value.trim();
+        const commentFeedback = document.getElementById('comment-feedback').value.trim();
+        
+        // Validate required fields
+        if (!commentUrl || !commentFeedback) {
+          document.getElementById('comment-result').textContent = 'Please fill in all required fields.';
+          document.getElementById('comment-result').className = 'result error';
+          return;
+        }
+        
+        // Get values from hidden fields for Playwright tests
+        const timestampField = document.getElementById('comment-timestamp');
+        const xpathField = document.getElementById('comment-xpath');
+        const elementTextField = document.getElementById('comment-text');
+        const titleField = document.getElementById('comment-title');
+        
+        // Update comment object
+        const updatedComment = {
+          ...existingComment,
+          pageUrl: commentUrl,
+          feedback: commentFeedback,
+          timestamp: existingComment.timestamp,
+          elementText: elementTextField && elementTextField.value ? elementTextField.value : existingComment.elementText || '',
+          xpath: xpathField && xpathField.value ? xpathField.value : existingComment.xpath || '',
+          documentTitle: titleField && titleField.value ? titleField.value : existingComment.documentTitle || document.title,
+          updated: Date.now()
+        };
+        
+        // Update comment in the database
+        await currentDbService.updateComment(updatedComment);
+        
+        // Reload comments
+        await loadComments();
+        
+        // Success message
+        document.getElementById('comment-result').textContent = 'Comment updated successfully.';
+        document.getElementById('comment-result').className = 'result success';
+        
+        // Reset form and button
+        document.getElementById('add-comment-form').reset();
+        const submitButton = document.getElementById('add-comment');
+        submitButton.textContent = 'Add Comment';
+        submitButton.removeAttribute('data-edit-mode');
+        submitButton.removeAttribute('data-comment-timestamp');
+        
+        // Hide the cancel button
+        document.getElementById('cancel-edit').style.display = 'none';
+      } catch (error) {
+        document.getElementById('comment-result').textContent = `Error updating comment: ${error.message}`;
+        document.getElementById('comment-result').className = 'result error';
+      }
+    }
+  </script>
+</body>
+</html>

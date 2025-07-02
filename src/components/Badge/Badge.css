@@ -1,0 +1,69 @@
+@import '../variables.css';
+
+.badge {
+  display: inline-block;
+  padding: var(--bc-spacing-xs) var(--bc-spacing-sm);
+  font-size: var(--bc-font-xs);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: var(--bc-radius-pill);
+}
+
+/* Status badges */
+.badge-success {
+  background-color: var(--bc-success);
+  color: var(--bc-text-light);
+}
+
+.badge-warning {
+  background-color: var(--bc-warning);
+  color: var(--bc-text-dark);
+}
+
+.badge-error {
+  background-color: var(--bc-danger);
+  color: var(--bc-text-light);
+}
+
+.badge-info {
+  background-color: var(--bc-info);
+  color: var(--bc-text-light);
+}
+
+/* Numeric badges */
+.badge-numeric {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--bc-spacing-xs);
+  background-color: var(--bc-danger);
+  color: var(--bc-text-light);
+  border-radius: var(--bc-radius-circle);
+}
+
+/* Text badges with different colors */
+.badge-primary {
+  background-color: var(--bc-primary);
+  color: var(--bc-text-light);
+}
+
+.badge-secondary {
+  background-color: var(--bc-secondary);
+  color: var(--bc-text-light);
+}
+
+.badge-dark {
+  background-color: var(--bc-bg-dark);
+  color: var(--bc-text-light);
+}
+
+.badge-light {
+  background-color: var(--bc-bg-light);
+  color: var(--bc-text-dark);
+  border: 1px solid var(--bc-border-medium);
+}

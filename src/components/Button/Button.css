@@ -1,0 +1,40 @@
+@import '../variables.css';
+
+/* Base button style */
+.button {
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: var(--bc-spacing-sm) var(--bc-spacing-md);
+  font-size: var(--bc-font-md);
+  line-height: 1.5;
+  border-radius: var(--bc-radius-sm);
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  cursor: pointer;
+  background-color: var(--bc-primary);
+  color: var(--bc-text-light);
+}
+
+.button:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+
+.button:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Button spacing when multiple buttons are used together */
+.button + .button {
+  margin-left: var(--bc-spacing-sm);
+}

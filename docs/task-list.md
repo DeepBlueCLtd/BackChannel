@@ -1,113 +1,113 @@
-# BackChannel Task List – Capture and Review Modes
+# BackChannel Development Task List (Capture + Review Modes)
 
-This task list breaks down the full implementation of the BackChannel plugin into safe, iterative steps. It covers both `Capture` mode (end-user providing feedback) and `Review` mode (author reviewing and resolving feedback from CSV).
-
----
-
-## ✅ Phase 1: Foundation — Setup and Scaffolding
-
-- [ ] Initialize Git repository
-- [ ] Create folder structure (`src/`, `dist/`, `example/`)
-- [ ] Add baseline files: `README.md`, `.gitignore`, `LICENSE`
-- [ ] Configure TypeScript (`tsconfig.json`)
-- [ ] Configure Rollup for bundling (`rollup.config.js`)
-- [ ] Add ESLint + Prettier
-- [ ] Confirm build outputs to `dist/backchannel.js`
-- [ ] Create test `example/index.html` with placeholder init
-- [ ] Define a dummy `BackChannel.init()` to bootstrap
+This document breaks down the full implementation of BackChannel, covering both feedback capture and review across multi-page documents.
 
 ---
 
-## ✍️ Phase 2: Capture Mode
+## ✅ Phase 1: Scaffolding and Infrastructure
 
-### 2.1 Target Detection and Click Handling
-- [ ] Enable click-to-comment on any visible DOM element
-- [ ] Add hover and focus highlights for selectable elements
-- [ ] Track selected element (label, DOM ref, fallback index)
-
-### 2.2 Comment Entry UI
-- [ ] Create popup comment form
-- [ ] Support initials input if required
-- [ ] Validate form input and allow cancel/submit
-- [ ] Save to in-memory data model on submit
-
-### 2.3 Local Storage Backend
-- [ ] Store submitted comments in `localStorage`
-- [ ] Use scoped `storageKey` if configured
-- [ ] Load existing comments on page load
-
-### 2.4 Sidebar View
-- [ ] Create sidebar to list all comments
-- [ ] Show metadata: label, timestamp, initials
-- [ ] Scroll to anchor on comment click
-- [ ] Visually mark elements with comment icons
-
-### 2.5 CSV Export
-- [ ] Add “Export Feedback” button
-- [ ] Generate downloadable CSV file
-- [ ] Include: label, comment, timestamp, reviewer
+- [ ] Set up project with TypeScript + Vite + ESLint/Prettier
+- [ ] Create build process to produce a single-file JS plugin
+- [ ] Implement IndexedDB wrapper (package store, comments table)
+- [ ] Define shared types: Comment, FeedbackPackage, PageMetadata
+- [ ] Create base CSS for badges, sidebars, buttons
 
 ---
 
-## 🗂 Phase 3: Review Mode
+## ✅ Phase 2: Capture Mode – Core Functionality
 
-### 3.1 CSV Import and Parsing
-- [ ] Add “Import Feedback” button to sidebar
-- [ ] Support drag-and-drop or file picker
-- [ ] Parse CSV with validation (columns: label, comment, timestamp, reviewer)
-- [ ] Identify matching DOM elements
-- [ ] Handle unmatched entries as "orphaned"
+### Package Creation
+- [ ] Check if there is an active feedback package for this URL
+- [ ] If there is, open it
+- [ ] If there isn't, provide some user guidance on how to create one, including inviting user to navigate to welcome/home page, and create one
+- [ ] Show dialog to confirm/edit URL prefix, document name and author initials
+- [ ] Store feedback package metadata in IndexedDB
+- [ ] Load active package on pages matching prefix
 
-### 3.2 Feedback Display
-- [ ] Merge imported feedback with any existing
-- [ ] Visually mark elements with imported comments
-- [ ] Tooltip on hover with preview
-- [ ] Sidebar lists all imported feedback
+### Commenting
+- [ ] Add comment on DOM click (default fallback if no `.reviewable`)
+- [ ] Show comment UI with editable text.  Show this form in a compact way at the top of the BC sidebar
+- [ ] Save comment to `comments` table with metadata
+- [ ] Render comment badge on target element
+- [ ] List current page comments in sidebar
 
-### 3.3 Filtering and Sorting
-- [ ] Add filter by reviewer initials
-- [ ] Add toggle to show/hide resolved comments
-- [ ] Enable sort by timestamp or label
-
-### 3.4 Comment Resolution Workflow
-- [ ] Add “Mark Resolved” button per comment
-- [ ] Support undo resolution
-- [ ] Visually distinguish resolved vs unresolved
-- [ ] Persist resolution status in localStorage
-
-### 3.5 Review Export
-- [ ] Export current review state as CSV
-- [ ] Include “resolved” column
-- [ ] Add “Export Filtered View” option
+### Navigation
+- [ ] Detect feedback package match on other pages
+- [ ] Append comments to same package across document
 
 ---
 
-## 🧪 Phase 4: Robustness and Edge Cases
+## ✅ Phase 3: Capture Mode – Persistence and Export
 
-- [ ] Handle localStorage full/unavailable
-- [ ] Gracefully report CSV import errors
-- [ ] Warn for “orphaned” comments
-- [ ] Fallback labels for elements without innerText
-- [ ] Support multiple comments per element
-- [ ] Large scale test: 100+ comments
-
----
-
-## 🎨 Phase 5: Usability and Polish
-
-- [ ] Style popup and sidebar for clarity
-- [ ] Ensure accessibility (keyboard focus, aria labels)
-- [ ] Add in-page help tooltip
-- [ ] Optional: inline styles fallback
+- [ ] Persist comments and badges after reload
+- [ ] List and filter comments by page
+- [ ] Export CSV for full feedback package (merged rows)
+- [ ] Include document name, page title, URL, label, timestamp, initials
+- [ ] Note: CSV will have some `organisational` data at head: document title, url ,author initials.
 
 ---
 
-## 📦 Phase 6: Distribution and Docs
+## ✅ Phase 4: Review Mode – Core Functionality
 
-- [ ] Minify final JS bundle
-- [ ] Provide UMD-compatible output
-- [ ] Document plugin API and init options
-- [ ] Write integration guide for legacy HTML
-- [ ] Add usage examples and demo GIFs
-- [ ] Prepare ZIP-based release and/or NPM publish
+### Import and Display
+- [ ] Enable CSV import via file input
+- [ ] Parse CSV into in-memory comment list
+- [ ] Load comments into sidebar
+- [ ] Highlight comments for current page
+- [ ] If an in-page link is to a URL for which there is a feedback comment, show "open comment in linked page" decoration to UR.  This decoration will include an arrow.
+- [ ] Show off-page comments in sidebar with page label + link
+- [ ] Toggle: "This Page Only" vs "Entire Document"
 
+### Comment Linking
+- [ ] Map current page comments to DOM elements
+- [ ] Gracefully handle missing elements
+- [ ] Provide link to off-page comment source
+
+---
+
+## ✅ Phase 5: Review Mode – Managing Feedback
+
+### Resolution Management
+- [ ] Allow marking a comment as resolved / reopened
+- [ ] Update sidebar badge and state styling
+- [ ] Persist resolution status in memory
+
+### Exporting Reviewed Feedback
+- [ ] Export current page (CSV with resolution info)
+- [ ] Export full document feedback (merged CSV)
+
+---
+
+## ✅ Phase 6: User Interface Polish
+
+- [ ] Add sort/filter controls in sidebar (page, timestamp, resolution)
+- [ ] Highlight active comment
+- [ ] Style review links, navigation aids
+- [ ] Improve badge contrast and click hit-area
+
+---
+
+## ✅ Phase 7: Error Handling & Edge Cases
+
+- [ ] Warn on missing or malformed CSV imports
+- [ ] Handle IndexedDB failure gracefully
+- [ ] Detect invalid feedback package input
+- [ ] Log and skip rows with missing fields
+
+---
+
+## ✅ Phase 8: Testing and QA
+
+- [ ] Unit tests for core logic (IndexedDB, parsing, rendering)
+- [ ] Integration tests simulating multi-page workflow
+- [ ] Manual QA across browsers and file protocols
+- [ ] Coverage review vs BDD specs
+
+---
+
+## ✅ Phase 9: Documentation and Packaging
+
+- [ ] Write end-user guide for Capture + Review
+- [ ] Document CSV format and metadata
+- [ ] Add embed/install instructions
+- [ ] Minify and publish single-file plugin
