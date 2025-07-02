@@ -12,8 +12,8 @@
     "lint:fix": "eslint src --ext ts,tsx --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
     "test": "vitest run",
-    "test:integration": "playwright test",
-    "test:all": "yarn build-plugin && yarn test && yarn test:integration"
+    "test:e2e": "playwright test",
+    "test:all": "yarn build-plugin && yarn test && yarn test:e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.1",
