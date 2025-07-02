@@ -461,4 +461,201 @@ test.describe('DatabaseService', () => {
     await expect(commentRow.locator('td:nth-child(1)')).toContainText(testUrl)
     await expect(commentRow.locator('td:nth-child(2)')).toContainText(testFeedback)
   })
+
+  /**
+   * Test 12: Update/edit a comment in a database
+   * This test verifies that comments can be edited and updated
+   */
+  test('should update/edit a comment in a database', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+
+    // First create a standard test database to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+
+    // List databases to get their IDs
+    await page.click('#list-databases')
+    await page.waitForSelector('#list-db-result.result.success')
+
+    // Get the first database ID from the list (Example Site Package)
+    const firstDbId = await page
+      .locator('#database-list tr:nth-child(1) td:nth-child(1)')
+      .textContent()
+    const dbId = firstDbId ? firstDbId.replace('bc-storage-', '') : ''
+    expect(dbId).not.toBe('')
+
+    // Enter the database ID in the input field
+    await page.fill('#load-db-id', dbId)
+
+    // Click the Load Database button
+    await page.click('#load-database')
+
+    // Wait for the database to be loaded
+    await page.waitForSelector('#load-db-result.result.success')
+
+    // Verify that the comments container is visible
+    const commentsContainer = page.locator('#comments-container')
+    await expect(commentsContainer).toBeVisible()
+
+    // Create a test comment first
+    const testUrl = 'https://example.com/test-page.html'
+    const initialFeedback = 'Initial comment for testing'
+    const timestamp = Date.now().toString()
+
+    // Fill in the comment form
+    await page.fill('#comment-timestamp', timestamp)
+    await page.fill('#comment-xpath', '/html/body/div[1]/p')
+    await page.fill('#comment-text', 'Test element text')
+    await page.fill('#comment-title', 'Test Page Title')
+    await page.fill('#comment-url', testUrl)
+    await page.fill('#comment-feedback', initialFeedback)
+
+    // Submit the comment form
+    await page.click('#add-comment')
+
+    // Wait for the comment result to be displayed
+    await page.waitForSelector('#comment-result.result.success')
+
+    // Now edit the comment
+    // Find the edit button for the comment we just added
+    const editButton = page.locator(
+      '#comments-list tr:first-child td:nth-child(3) button:first-child'
+    )
+    await editButton.click()
+
+    // Verify that the form is now in edit mode
+    const addButton = page.locator('#add-comment')
+    await expect(addButton).toHaveText('Update Comment')
+
+    // The URL field should be pre-filled with the original URL
+    await expect(page.locator('#comment-url')).toHaveValue(testUrl)
+
+    // Update the feedback text
+    const updatedFeedback = 'Updated comment for testing'
+    await page.fill('#comment-feedback', updatedFeedback)
+
+    // Submit the form to update the comment
+    await page.click('#add-comment')
+
+    // Wait for the update result to be displayed
+    const updateResult = page.locator('#comment-result')
+    await expect(updateResult).toBeVisible()
+    await expect(updateResult).toHaveClass('result success')
+    await expect(updateResult).toContainText('Comment updated successfully')
+
+    // Verify the comment is updated in the list
+    const updatedCommentRow = page.locator('#comments-list tr:first-child')
+    await expect(updatedCommentRow).toBeVisible()
+    await expect(updatedCommentRow.locator('td:nth-child(1)')).toContainText(testUrl)
+    await expect(updatedCommentRow.locator('td:nth-child(2)')).toContainText(updatedFeedback)
+
+    // Verify the form is reset to add mode
+    await expect(addButton).toHaveText('Add Comment')
+  })
+
+  /**
+   * Test 13: Delete a comment from a database
+   * This test verifies that comments can be deleted from a database
+   */
+  test('should delete a comment from a database', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+
+    // First create a standard test database to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+
+    // List databases to get their IDs
+    await page.click('#list-databases')
+    await page.waitForSelector('#list-db-result.result.success')
+
+    // Get the first database ID from the list (Example Site Package)
+    const firstDbId = await page
+      .locator('#database-list tr:nth-child(1) td:nth-child(1)')
+      .textContent()
+    const dbId = firstDbId ? firstDbId.replace('bc-storage-', '') : ''
+    expect(dbId).not.toBe('')
+
+    // Enter the database ID in the input field
+    await page.fill('#load-db-id', dbId)
+
+    // Click the Load Database button
+    await page.click('#load-database')
+
+    // Wait for the database to be loaded
+    await page.waitForSelector('#load-db-result.result.success')
+
+    // Verify that the comments container is visible
+    const commentsContainer = page.locator('#comments-container')
+    await expect(commentsContainer).toBeVisible()
+
+    // Create a test comment first
+    const testUrl = 'https://example.com/delete-test-page.html'
+    const testFeedback = 'Comment to be deleted'
+    const timestamp = Date.now().toString()
+
+    // Fill in the comment form
+    await page.fill('#comment-timestamp', timestamp)
+    await page.fill('#comment-xpath', '/html/body/div[1]/p')
+    await page.fill('#comment-text', 'Test element text')
+    await page.fill('#comment-title', 'Test Page Title')
+    await page.fill('#comment-url', testUrl)
+    await page.fill('#comment-feedback', testFeedback)
+
+    // Submit the comment form
+    await page.click('#add-comment')
+
+    // Wait for the comment result to be displayed
+    await page.waitForSelector('#comment-result.result.success')
+
+    // Count the number of comments before deletion
+    const commentRowsBefore = await page.locator('#comments-list tr').count()
+    expect(commentRowsBefore).toBeGreaterThan(0)
+
+    // Find the delete button for the comment we just added
+    const deleteButton = page.locator(
+      '#comments-list tr:first-child td:nth-child(3) button:nth-child(2)'
+    )
+
+    // Set up a dialog handler to accept the confirmation dialog
+    page.on('dialog', dialog => dialog.accept())
+
+    // Click the delete button
+    await deleteButton.click()
+
+    // Wait for the delete result to be displayed
+    const deleteResult = page.locator('#comment-result')
+    await expect(deleteResult).toBeVisible()
+    await expect(deleteResult).toHaveClass('result success')
+    await expect(deleteResult).toContainText('Comment deleted successfully')
+
+    // After deletion, we should reload the database to ensure we're seeing the latest state
+    // This will refresh the comments list
+    await page.click('#load-database')
+    await page.waitForSelector('#load-db-result.result.success')
+
+    // Wait for the comments list to update
+    await page.waitForTimeout(500)
+
+    // Now check if our specific comment with the unique URL and feedback is still visible
+    // We'll look for the exact row that would contain our comment
+    const commentRows = page.locator('#comments-list tr')
+    const count = await commentRows.count()
+
+    // Check each row to see if it contains our deleted comment
+    let foundDeletedComment = false
+    for (let i = 0; i < count; i++) {
+      const rowText = await commentRows.nth(i).textContent()
+      if (rowText && rowText.includes(testFeedback) && rowText.includes(testUrl)) {
+        foundDeletedComment = true
+        break
+      }
+    }
+
+    // We should not find our deleted comment
+    expect(foundDeletedComment).toBe(false)
+  })
 })

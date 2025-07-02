@@ -527,16 +527,28 @@ class DatabaseService {
       return new Promise((resolve) => {
         const transaction = this.db.transaction(['comments'], 'readwrite');
         const store = transaction.objectStore('comments');
-        const request = store.delete(timestamp);
-
-        request.onsuccess = () => {
-          resolve(true);
+        // if timestamp is a string, convert it to an integer
+        if (typeof timestamp === 'string') {
+          timestamp = parseInt(timestamp);
+        }
+        // check object with this key exists
+        const getRequest = store.get(timestamp);
+        getRequest.onsuccess = () => {
+          if (getRequest.result) {
+            const request = store.delete(timestamp);
+            request.onsuccess = () => {
+              resolve(true);
+            };
+            request.onerror = (event) => {
+              console.error('Error deleting comment:', event.target.error);
+              resolve(false);
+            };
+          } else {
+            console.log('Comment not found', timestamp, typeof timestamp)
+            resolve(false);
+          }
         };
 
-        request.onerror = (event) => {
-          console.error('Error deleting comment:', event.target.error);
-          resolve(false);
-        };
       });
     } catch (error) {
       console.error('Error in deleteComment:', error);
