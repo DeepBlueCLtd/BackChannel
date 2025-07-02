@@ -360,4 +360,35 @@ test.describe('DatabaseService', () => {
     await expect(firstRow.locator('td:nth-child(2)')).toHaveText('Second Site Package') // Package name column
     await expect(firstRow.locator('td:nth-child(3)')).toHaveText('https://second.com') // Root URL column
   })
+
+  /**
+   * Test 10: Test active package for a given URL
+   * This test verifies that the active package can be tested for a given URL
+   */
+  test('should test active package for a given URL', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+    
+    // First create some standard test databases to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+    
+    // Enter a URL to test
+    // The standard test databases contain packages with URLs like 'https://example.com/'
+    await page.fill('#test-url', 'https://example.com/some/page.html')
+    
+    // Click the Test Active Package button
+    await page.click('#test-active-package')
+    
+    // Wait for the active package result to be displayed
+    const activePackageResult = page.locator('#active-package-result')
+    await expect(activePackageResult).toBeVisible()
+    await expect(activePackageResult).toHaveClass('result success')
+    
+    // Verify that the active package result contains the expected text
+    await expect(activePackageResult).toContainText('Active package found')
+    await expect(activePackageResult).toContainText('Example Site Package')
+    await expect(activePackageResult).toContainText('https://example.com')
+  })
 })

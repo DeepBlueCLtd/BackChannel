@@ -1120,7 +1120,7 @@
     // Test active package for Playwright tests
     document.getElementById('test-active-package').addEventListener('click', async () => {
       try {
-        const resultElement = document.getElementById('active-package-result');
+        const resultElement = document.getElementById('search-result');
         resultElement.textContent = 'Testing active package...';
         resultElement.className = 'result';
         
@@ -1143,7 +1143,7 @@
         // Load the first matching database
         const dbId = matchingDatabases[0].dbId;
         const dbService = new DatabaseService(dbId);
-        await dbService.open();
+        await dbService.init();
         const pkg = await dbService.getPackage();
         
         // Store the current database service and package
