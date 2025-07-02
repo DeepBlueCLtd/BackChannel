@@ -34,8 +34,6 @@
       <div class="panel" style="margin-bottom: 15px;">
         <h3>Initialize Database</h3>
         <div class="form-group">
-          <label for="db-name">Database Name:</label>
-          <input type="text" id="db-name" value="Test Database" placeholder="Enter database name">
           <button id="init-db">Initialize Database</button>
         </div>
         <div class="result" id="init-result"></div>
@@ -48,8 +46,6 @@
           <option value="many">Many Test Databases (10)</option>
           <option value="custom">Custom Test Database</option>
         </select>
-        <button id="setup-test-packages">Setup Test Packages</button>
-        <button id="clear-test-packages">Clear Test Packages</button>
       </div>
       <div class="result" id="active-package-result"></div>
       
@@ -370,22 +366,23 @@
     // Initialize database handler for Playwright tests
     document.getElementById('init-db').addEventListener('click', async () => {
       try {
-        const dbName = document.getElementById('db-name').value.trim() || 'Test Database';
+        const dbName = 'Test Database';
         const resultElement = document.getElementById('init-result');
         resultElement.textContent = 'Initializing database...';
         resultElement.className = 'result';
         
         // Create a database service with the specified name
-        const dbService = new DatabaseService(`bc-storage-${dbName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
-        
-        // Initialize with a test package
-        const success = await dbService.init({
+        const metadata = {
           name: dbName,
           version: '1.0.0',
           author: 'Test User',
           description: 'Test database created for Playwright tests',
           rootURL: 'https://example.com'
-        });
+        }
+        const dbService = new DatabaseService(dbName, metadata);
+        
+        // Initialize with a test package
+        const success = await dbService.init();
         
         if (success) {
           resultElement.textContent = `Database '${dbName}' initialized successfully.`;
@@ -493,84 +490,6 @@
     document.getElementById('test-template').addEventListener('change', (event) => {
       const customForm = document.getElementById('custom-package-form');
       customForm.style.display = event.target.value === 'custom' ? 'block' : 'none';
-    });
-    
-    // Clear test packages button click handler
-    document.getElementById('clear-test-packages').addEventListener('click', async () => {
-      try {
-        const resultElement = document.getElementById('active-package-result');
-        resultElement.textContent = 'Clearing test packages...';
-        resultElement.className = 'result';
-        
-        // Get all BackChannel databases
-        const databases = await DatabaseService.getAllBackChannelDatabases();
-        
-        // Delete each database
-        let deletedCount = 0;
-        for (const dbInfo of databases) {
-          const dbId = dbInfo.replace('bc-storage-', '');
-          await indexedDB.deleteDatabase(`bc-storage-${dbId}`);
-          deletedCount++;
-        }
-        
-        resultElement.textContent = `Successfully cleared ${deletedCount} test packages.`;
-        resultElement.className = 'result success';
-        
-        // Refresh the database list
-        await listDatabases();
-      } catch (error) {
-        const resultElement = document.getElementById('active-package-result');
-        resultElement.textContent = `Error clearing test packages: ${error.message}`;
-        resultElement.className = 'result error';
-      }
-    });
-    
-    // Setup test packages for Playwright tests
-    document.getElementById('setup-test-packages').addEventListener('click', async () => {
-      try {
-        const resultElement = document.getElementById('active-package-result');
-        resultElement.textContent = 'Setting up test packages...';
-        resultElement.className = 'result';
-        
-        // Create test databases with example packages for testing
-        const testDatabases = [
-          {
-            name: 'Example Site Package',
-            version: '1.0.0',
-            author: 'Test User',
-            description: 'Test package for example.com',
-            rootURL: 'https://example.com'
-          },
-          {
-            name: 'Test Site Package',
-            version: '1.0.0',
-            author: 'Test User',
-            description: 'Test package for test.com',
-            rootURL: 'https://test.com'
-          },
-          {
-            name: 'Subpath Test Package',
-            version: '1.0.0',
-            author: 'Test User',
-            description: 'Test package for subpath testing',
-            rootURL: 'https://subpath.example.com/app'
-          }
-        ];
-        
-        // Create each test database
-        for (let i = 0; i < testDatabases.length; i++) {
-          const dbName = `test-db-${i + 1}`;
-          const dbService = new DatabaseService(`bc-storage-${dbName}`);
-          await dbService.init(testDatabases[i]);
-        }
-        
-        resultElement.textContent = 'Successfully created test packages for Playwright tests.';
-        resultElement.className = 'result success';
-      } catch (error) {
-        const resultElement = document.getElementById('active-package-result');
-        resultElement.textContent = `Error setting up test packages: ${error.message}`;
-        resultElement.className = 'result error';
-      }
     });
     
     // Step 3: Create test databases
@@ -725,10 +644,12 @@
         let loadedCount = 0;
         const results = [];
         
-        for (const dbInfo of feedbackDatabases) {
+        for (const dbName of feedbackDatabases) {
           try {
             // Extract the ID from the database name (bc-storage-{id})
-            const dbId = dbInfo.replace('bc-storage-', '');
+            const dbId = dbName.replace('bc-storage-', '');
+
+            console.log('opening', dbId)
             
             // Create a database service to load the package
             const dbService = new DatabaseService(dbId);
@@ -756,7 +677,7 @@
               
               // Database name cell
               const dbNameCell = document.createElement('td');
-              dbNameCell.textContent = dbInfo.name;
+              dbNameCell.textContent = dbName;
               row.appendChild(dbNameCell);
               
               // Package ID cell
@@ -851,6 +772,7 @@
     // Step 6: Load database
     async function loadDatabase(dbId) {
       try {
+        console.log('about to load database', dbId)
         const resultElement = document.getElementById('load-db-result');
         resultElement.textContent = `Loading database ${dbId}...`;
         resultElement.className = 'result';
@@ -959,10 +881,10 @@
         };
         
         // Create a new database service (ID will be auto-generated)
-        const dbService = new DatabaseService();
+        const dbService = new DatabaseService(undefined, packageMetadata);
         
         // Initialize with package data
-        const initSuccess = await dbService.init(packageMetadata);
+        const initSuccess = await dbService.init();
         
         if (!initSuccess) {
           resultElement.textContent = 'Failed to create package database.';
