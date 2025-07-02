@@ -223,4 +223,46 @@ test.describe('DatabaseService', () => {
     const dbRows = page.locator('#database-list tr')
     await expect(dbRows).toHaveCount(10)
   })
+  
+  /**
+   * Test 7: List all databases and verify table population
+   * This test verifies that all databases can be listed and the table is populated correctly
+   */
+  test('should list all databases and populate table correctly', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+    
+    // First create some standard test databases to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+    
+    // Click the "List Databases" button
+    await page.click('#list-databases')
+    
+    // Wait for the list result to be displayed
+    const listResultElement = page.locator('#list-db-result')
+    await expect(listResultElement).toBeVisible()
+    await expect(listResultElement).toHaveClass('result success')
+    
+    // Verify the database list container is visible
+    const dbListContainer = page.locator('#database-list-container')
+    await expect(dbListContainer).toBeVisible()
+    
+    // Check that the database table has headers
+    const tableHeaders = page.locator('#database-table thead th')
+    await expect(tableHeaders).toHaveCount(5) // Database Name, Package ID, Package Name, Root URL, Actions
+    
+    // Check that we have exactly 3 rows in the database table (from standard test databases)
+    const dbRows = page.locator('#database-list tr')
+    const rowCount = await dbRows.count()
+    expect(rowCount).toBe(3)
+    
+    // Verify that the table contains expected columns
+    const firstRow = page.locator('#database-list tr:nth-child(1)') // Skip header row
+    await expect(firstRow.locator('td:nth-child(1)')).toBeVisible() // ID column
+    await expect(firstRow.locator('td:nth-child(2)')).toBeVisible() // Name column
+    await expect(firstRow.locator('td:nth-child(3)')).toBeVisible() // Version column
+    await expect(firstRow.locator('td:nth-child(4)')).toBeVisible() // Actions column
+  })
 })
