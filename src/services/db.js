@@ -141,7 +141,7 @@ class DatabaseService {
     
     // Get all BackChannel databases
     const allDatabases = await DatabaseService.getAllBackChannelDatabases();
-    
+
     if (allDatabases.length === 0) {
       return [];
     }
@@ -161,7 +161,7 @@ class DatabaseService {
       try {
         // Get the package from this database
         const packageData = await dbService.getPackage();
-        
+
         // Check if the URL starts with the package's rootURL (proper subpath matching)
         if (packageData && packageData.rootURL && urlPattern.startsWith(packageData.rootURL)) {
           matchingPackages.push({

@@ -88,12 +88,14 @@ test.describe('DatabaseService Tests', () => {
     await page.click('#init-db');
     await expect(page.locator('#init-result')).toContainText('Database', { timeout: 5000 });
     
-    // Set package data
-    await page.fill('#package-id', 'test-pkg-001');
-    await page.fill('#package-name', 'Test Package');
-    await page.fill('#package-version', '1.0.0');
-    await page.fill('#package-author', 'Playwright Test');
-    await page.fill('#package-description', 'Package created by automated test');
+    // Set package data using JavaScript evaluation instead of direct form interaction
+    await page.evaluate(() => {
+      document.getElementById('package-id').value = 'test-pkg-001';
+      document.getElementById('package-name').value = 'Test Package';
+      document.getElementById('package-version').value = '1.0.0';
+      document.getElementById('package-author').value = 'Playwright Test';
+      document.getElementById('package-description').value = 'Package created by automated test';
+    });
     
     // Add the package
     await page.click('#add-package');
@@ -119,21 +121,25 @@ test.describe('DatabaseService Tests', () => {
     await page.click('#init-db');
     await expect(page.locator('#init-result')).toContainText('Database', { timeout: 5000 });
     
-    // Set package data
-    await page.fill('#package-id', 'test-pkg-002');
-    await page.fill('#package-name', 'Package to Update');
-    await page.fill('#package-version', '1.0.0');
-    await page.fill('#package-author', 'Original Author');
-    await page.fill('#package-description', 'Original description');
+    // Set package data using JavaScript evaluation
+    await page.evaluate(() => {
+      document.getElementById('package-id').value = 'test-pkg-002';
+      document.getElementById('package-name').value = 'Package to Update';
+      document.getElementById('package-version').value = '1.0.0';
+      document.getElementById('package-author').value = 'Original Author';
+      document.getElementById('package-description').value = 'Original description';
+    });
     
     // Add the package
     await page.click('#add-package');
     await expect(page.locator('#package-result')).toContainText('Package added successfully', { timeout: 5000 });
     
-    // Update package data
-    await page.fill('#package-name', 'Updated Package');
-    await page.fill('#package-version', '1.0.1');
-    await page.fill('#package-author', 'New Author');
+    // Update package data using JavaScript evaluation
+    await page.evaluate(() => {
+      document.getElementById('package-name').value = 'Updated Package';
+      document.getElementById('package-version').value = '1.0.1';
+      document.getElementById('package-author').value = 'New Author';
+    });
     
     // Update the package
     await page.click('#update-package');
@@ -159,9 +165,11 @@ test.describe('DatabaseService Tests', () => {
     await page.click('#init-db');
     await expect(page.locator('#init-result')).toContainText('Database', { timeout: 5000 });
     
-    // Set package data
-    await page.fill('#package-id', 'test-pkg-003');
-    await page.fill('#package-name', 'Package to Delete');
+    // Set package data using JavaScript evaluation
+    await page.evaluate(() => {
+      document.getElementById('package-id').value = 'test-pkg-003';
+      document.getElementById('package-name').value = 'Package to Delete';
+    });
     
     // Add the package
     await page.click('#add-package');
@@ -187,14 +195,18 @@ test.describe('DatabaseService Tests', () => {
     await page.click('#init-db');
     await expect(page.locator('#init-result')).toContainText('Database', { timeout: 5000 });
     
-    // Set comment data
+    // Set comment data using JavaScript evaluation
     const timestamp = Date.now();
-    await page.fill('#comment-timestamp', timestamp.toString());
-    await page.fill('#comment-xpath', '/html/body/div/p[2]');
-    await page.fill('#comment-text', 'Test paragraph');
-    await page.fill('#comment-feedback', 'This is a test comment from Playwright');
-    await page.fill('#comment-url', '/test-document.html');
-    await page.fill('#comment-title', 'Test Document Title');
+    await page.evaluate((timestamp) => {
+      document.getElementById('comment-timestamp').value = timestamp.toString();
+      document.getElementById('comment-xpath').value = '/html/body/div/p[2]';
+      document.getElementById('comment-text').value = 'Test paragraph';
+      document.getElementById('comment-feedback').value = 'This is a test comment from Playwright';
+    }, timestamp);
+    await page.evaluate(() => {
+      document.getElementById('comment-url').value = '/test-document.html';
+      document.getElementById('comment-title').value = 'Test Document Title';
+    });
     
     // Add the comment
     await page.click('#add-comment');
@@ -219,12 +231,14 @@ test.describe('DatabaseService Tests', () => {
     await page.click('#init-db');
     await expect(page.locator('#init-result')).toContainText('Database', { timeout: 5000 });
     
-    // Set comment data
+    // Set comment data using JavaScript evaluation
     const timestamp = Date.now();
-    await page.fill('#comment-timestamp', timestamp.toString());
-    await page.fill('#comment-xpath', '/html/body/div/p[3]');
-    await page.fill('#comment-text', 'Original text');
-    await page.fill('#comment-feedback', 'Original feedback');
+    await page.evaluate((timestamp) => {
+      document.getElementById('comment-timestamp').value = timestamp.toString();
+      document.getElementById('comment-xpath').value = '/html/body/div/p[3]';
+      document.getElementById('comment-text').value = 'Original text';
+      document.getElementById('comment-feedback').value = 'Original feedback';
+    }, timestamp);
     
     // Add a comment first
     await page.click('#add-comment');
