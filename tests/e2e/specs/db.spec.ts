@@ -391,4 +391,74 @@ test.describe('DatabaseService', () => {
     await expect(activePackageResult).toContainText('Example Site Package')
     await expect(activePackageResult).toContainText('https://example.com')
   })
+
+  /**
+   * Test 11: Add a comment to a database
+   * This test verifies that comments can be added to a database
+   */
+  test('should add a comment to a database', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+
+    // First create a standard test database to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+
+    // List databases to get their IDs
+    await page.click('#list-databases')
+    await page.waitForSelector('#list-db-result.result.success')
+
+    // Get the first database ID from the list (Example Site Package)
+    const firstDbId = await page
+      .locator('#database-list tr:nth-child(1) td:nth-child(1)')
+      .textContent()
+    const dbId = firstDbId ? firstDbId.replace('bc-storage-', '') : ''
+    expect(dbId).not.toBe('')
+
+    // Enter the database ID in the input field
+    await page.fill('#load-db-id', dbId)
+
+    // Click the Load Database button
+    await page.click('#load-database')
+
+    // Wait for the database to be loaded
+    await page.waitForSelector('#load-db-result.result.success')
+
+    // Verify that the comments container is visible
+    const commentsContainer = page.locator('#comments-container')
+    await expect(commentsContainer).toBeVisible()
+
+    // Create a test comment
+    const testUrl = 'https://example.com/test-page.html'
+    const testFeedback = 'This is a test comment for Playwright testing'
+    const timestamp = Date.now().toString()
+
+    // Fill in the comment form
+    await page.fill('#comment-timestamp', timestamp)
+    await page.fill('#comment-xpath', '/html/body/div[1]/p')
+    await page.fill('#comment-text', 'Test element text')
+    await page.fill('#comment-title', 'Test Page Title')
+    await page.fill('#comment-url', testUrl)
+    await page.fill('#comment-feedback', testFeedback)
+
+    // Submit the comment form
+    await page.click('#add-comment')
+
+    // Wait for the comment result to be displayed
+    const commentResult = page.locator('#comment-result')
+    await expect(commentResult).toBeVisible()
+    await expect(commentResult).toHaveClass('result success')
+    await expect(commentResult).toContainText('Comment added successfully')
+
+    // Verify the comment is displayed in the comments list
+    const commentsList = page.locator('#comments-list-container')
+    await expect(commentsList).toBeVisible()
+
+    // Check that the comment appears in the list with the correct URL and feedback
+    const commentRow = page.locator('#comments-list tr')
+    await expect(commentRow).toBeVisible()
+    await expect(commentRow.locator('td:nth-child(1)')).toContainText(testUrl)
+    await expect(commentRow.locator('td:nth-child(2)')).toContainText(testFeedback)
+  })
 })
