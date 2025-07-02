@@ -16,7 +16,7 @@ const rootDir = path.join(__dirname, '../../..')
  */
 test.describe('DatabaseService', () => {
   // Set a longer timeout for all tests in this file
-  // test.setTimeout(10000)
+  test.setTimeout(5000)
 
   // Setup a local server for testing
   let server
@@ -265,5 +265,99 @@ test.describe('DatabaseService', () => {
     await expect(firstRow.locator('td:nth-child(3)')).toBeVisible() // package name column
     await expect(firstRow.locator('td:nth-child(4)')).toBeVisible() // root url column
     await expect(firstRow.locator('td:nth-child(5)')).toBeVisible() // actions column
+  })
+
+  /**
+   * Test 8: Load a database by ID and verify package info
+   * This test verifies that a database can be loaded by ID and its package info is displayed correctly
+   */
+  test('should load a database by ID and verify package info', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+
+    // First create some standard test databases to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+
+    // List databases to get their IDs
+    await page.click('#list-databases')
+    await page.waitForSelector('#list-db-result.result.success')
+
+    // Get the first database ID from the list
+    const firstDbId = await page
+      .locator('#database-list tr:nth-child(1) td:nth-child(1)')
+      .textContent()
+    const dbId = firstDbId ? firstDbId.replace('bc-storage-', '') : ''
+    expect(dbId).not.toBe('')
+
+    // Enter the database ID in the input field
+    await page.fill('#load-db-id', dbId)
+
+    // Click the Load Database button
+    await page.click('#load-database')
+
+    // Wait for the database to be loaded
+    await page.waitForSelector('#load-db-result.result.success')
+
+    // Verify that the loaded database container is visible
+    const loadedDbContainer = page.locator('#loaded-db-container')
+    await expect(loadedDbContainer).toBeVisible()
+
+    // Verify that the loaded database name is displayed
+    const loadedDbName = page.locator('#loaded-db-name')
+    await expect(loadedDbName).toBeVisible()
+    await expect(loadedDbName).not.toHaveText('')
+
+    // Verify that the package details are displayed
+    await expect(page.locator('#loaded-pkg-id')).toBeVisible()
+    await expect(page.locator('#loaded-pkg-name')).toBeVisible()
+    await expect(page.locator('#loaded-pkg-version')).toBeVisible()
+    await expect(page.locator('#loaded-pkg-author')).toBeVisible()
+    await expect(page.locator('#loaded-pkg-description')).toBeVisible()
+  })
+
+  /**
+   * Test 9: Search for package by URL pattern and verify results
+   * This test verifies that packages can be searched by URL pattern
+   */
+  test('should search for package by URL pattern and verify results', async ({ page }) => {
+    await page.goto(`${serverUrl}/tests/e2e/fixtures/db-test.html`)
+    await page.waitForLoadState('networkidle')
+
+    // First create some standard test databases to ensure we have data
+    await page.selectOption('#test-template', 'standard')
+    await page.click('#create-test-dbs')
+    await page.waitForSelector('#test-db-result.result.success')
+
+    // Enter a URL pattern to search for
+    // The standard test databases contain packages with URLs like 'https://example.com/'
+    await page.fill('#search-url', 'https://second.com')
+
+    // Click the Search button
+    await page.click('#search-packages')
+
+    // Wait for the search result to be displayed with a timeout of 10 seconds
+    await page.waitForSelector('#search-results-container', { timeout: 10000 })
+    
+    // Verify that the search result contains the expected text
+    const searchResult = page.locator('#search-result')
+    await expect(searchResult).toContainText('Found')
+    await expect(searchResult).toContainText('package')
+    
+    // Verify that the search results container is visible
+    const searchResultsContainer = page.locator('#search-results-container')
+    await expect(searchResultsContainer).toBeVisible()
+    
+    // Verify that the search results table has at least one row
+    const searchResultsTable = page.locator('#search-results-list tr')
+    const rowCount = await searchResultsTable.count()
+    expect(rowCount).toBeGreaterThan(0)
+    
+    // Verify that the table contains expected columns
+    const firstRow = page.locator('#search-results-list tr:nth-child(1)')
+    await expect(firstRow.locator('td:nth-child(1)')).toBeVisible() // Database ID column
+    await expect(firstRow.locator('td:nth-child(2)')).toHaveText('Second Site Package') // Package name column
+    await expect(firstRow.locator('td:nth-child(3)')).toHaveText('https://second.com') // Root URL column
   })
 })
