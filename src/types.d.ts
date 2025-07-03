@@ -1,11 +1,7 @@
 /**
- * Type definitions for BackChannel
- */
-
-/**
  * Package data interface
  */
-interface Package {
+export interface Package {
   id?: string
   name: string
   version: string
@@ -17,7 +13,7 @@ interface Package {
 /**
  * Comment data interface
  */
-interface Comment {
+export interface Comment {
   timestamp: number
   xpath: string
   elementText: string
@@ -29,8 +25,16 @@ interface Comment {
 /**
  * Database match result interface
  */
-interface DatabaseMatch {
+export interface DatabaseMatch {
   dbId: string
   dbName?: string
+  packageData: Package
+}
+
+/**
+ * Active feedback package result interface
+ */
+interface ActiveFeedbackPackage {
+  dbId: string
   packageData: Package
 }
