@@ -11,6 +11,7 @@ This document breaks down the full implementation of BackChannel, covering both 
 - [ ] Implement IndexedDB wrapper (package store, comments table)
 - [ ] Define shared types: Comment, FeedbackPackage, PageMetadata
 - [ ] Create base CSS for badges, sidebars, buttons
+- [ ] Build process, distribution, demo instance
 
 ---
 

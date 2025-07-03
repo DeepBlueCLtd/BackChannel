@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BackChannel Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #f5f5f5;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        .highlight {
+            background-color: #ffffcc;
+            padding: 2px;
+        }
+        footer {
+            margin-top: 40px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>BackChannel Demo</h1>
+        <p>This page demonstrates the BackChannel library functionality.</p>
+    </header>
+
+    <main>
+        <h2>About BackChannel</h2>
+        <p>BackChannel is a powerful communication library that enables secure and efficient information exchange between components. It provides a robust framework for implementing various communication patterns.</p>
+
+        <h2>Key Features</h2>
+        <p>BackChannel offers several key features that make it stand out from other communication libraries:</p>
+        <p>The <span class="highlight">secure messaging</span> capabilities ensure that all communications are protected from unauthorized access.</p>
+        <p>With <span class="highlight">efficient data transfer</span>, BackChannel minimizes overhead and maximizes throughput for optimal performance.</p>
+        <p>The library's <span class="highlight">flexible architecture</span> allows it to be adapted to a wide range of use cases and integration scenarios.</p>
+
+        <h2>Implementation Example</h2>
+        <p>BackChannel can be easily integrated into your existing projects. The library is designed to be lightweight and non-intrusive, making it an ideal choice for both new and existing applications.</p>
+        <p>Check the browser console to see BackChannel in action. The library has been loaded and initialized on this page.</p>
+    </main>
+
+    <footer>
+        <p>BackChannel Demo Page - For demonstration purposes only.</p>
+    </footer>
+
+    <!-- Import the BackChannel library from the dist folder -->
+    <script src="../dist/backchannel.js"></script>
+    <script>
+        // Simple demonstration of BackChannel usage
+        console.log('BackChannel library loaded:', BackChannel);
+        
+        // Add a simple event listener to demonstrate functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Demo page loaded and BackChannel initialized');
+        });
+    </script>
+</body>
+</html>
