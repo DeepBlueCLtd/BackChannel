@@ -36,7 +36,7 @@ describe('DatabaseService with in-memory IndexedDB', () => {
     await new Promise<void>(resolve => {
       request.onsuccess = (event: any) => {
         // Add the fake database to the static array
-        DatabaseService.initFakeDatabases([event.target.result])
+        DatabaseService.useFakeDatabases([event.target.result])
         resolve()
       }
     })
@@ -112,7 +112,7 @@ describe('DatabaseService with in-memory IndexedDB', () => {
 
         addRequest.onsuccess = () => {
           // Add the fake database to the static array
-          DatabaseService.initFakeDatabases([db])
+          DatabaseService.useFakeDatabases([db])
           resolve()
         }
       }

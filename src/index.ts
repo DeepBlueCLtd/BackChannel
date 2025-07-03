@@ -7,10 +7,29 @@ import { handleElementClick, highlightCommentedElements, clearCommentHighlights 
 import { loadComments, saveComment, type CommentEntry } from './storage'
 import { createLaunchButton, renderSidebar, updateLaunchButton, type CommentFormData } from './ui'
 import { exportCommentsToCSV } from './exporter'
+import { DatabaseService } from './services/db'
+import { loadFakeDatabasesFromJson, type FakeDbJson } from './helpers/fakeDb'
 
 const BackChannel = {
   init: (config: BackChannelConfig) => {
     console.log('BackChannel initialized with config:', config)
+
+    // Check for fake database definitions and load them if available
+    if (typeof window !== 'undefined' && (window as any).fakeData) {
+      const fakeData = (window as any).fakeData as FakeDbJson[]
+      console.log('Fake database definitions detected:', fakeData)
+
+      // Load fake databases from JSON definitions
+      loadFakeDatabasesFromJson(fakeData)
+        .then((fakeDatabases: any[]) => {
+          console.log('Fake databases loaded:', fakeDatabases)
+          // Initialize DatabaseService with fake databases
+          DatabaseService.useFakeDatabases(fakeDatabases)
+        })
+        .catch((error: any) => {
+          console.error('Error loading fake databases:', error)
+        })
+    }
 
     let isSelectModeActive = false
     let sidebarEl: HTMLElement | null = null

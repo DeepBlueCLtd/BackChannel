@@ -1,76 +1,120 @@
-## Task: BC-DB-FAKE - Load Fake IndexedDB from `fakeData.ts` in Demo Pages
+## Task: BC-DB-FAKE3 - Support Demo JSON Definitions of Fake IndexedDB Content
 
-### 🧩 Purpose
+### 🎯 Purpose
 
-Allow demo/test pages to preload a fake in-memory IndexedDB via a `fakeData.ts` file. This enables precise control over test data while maintaining full TypeScript support. The system should fall back to real IndexedDB if no fake data is provided.
+Allow demo/test pages to load fake database contents by importing a `fakeData.ts` file that exports an array of typed JSON objects. These are converted into `IDBDatabase` instances using `fake-indexeddb`, and injected via a static method on `DatabaseService`.
+
+---
+
+### 🧩 Design Overview
+
+1. `fakeData.ts` exports an array of simple, typed JSON definitions:
+   ```ts
+   export const fakeData = [
+     {
+       name: 'bc-demo',
+       version: 1,
+       objectStores: [
+         {
+           name: 'comments',
+           keyPath: 'id',
+           data: [
+             { id: 1, text: 'Fake comment A' },
+             { id: 2, text: 'Fake comment B' }
+           ]
+         }
+       ]
+     }
+   ];
+   ```
+
+2. `index.ts` will:
+   - Detect presence of `window.fakeData`
+   - Convert JSON entries into `IDBDatabase` instances using `fake-indexeddb`
+   - Call `DatabaseService.useFakeDatabases([...])`
 
 ---
 
 ### 🛠️ Requirements
 
-#### 1. Global `fakeDb` detection
-- During app startup (`index.ts`), check if `window.fakeDb` is present.
-- If present, use `fake-indexeddb` to create an in-memory DB using the provided data.
-- Otherwise, fall back to regular IndexedDB via the existing `DatabaseService`.
+#### 1. Update `DatabaseService.ts`
+- Add static property and methods:
+  ```ts
+  static #fakeDatabases: IDBDatabase[] = [];
 
-#### 2. Accept `fakeDb` as constructor parameter
-- Update `DatabaseService` to accept an optional fake DB object.
-- If provided, inject it instead of using `indexedDB`.
+  static useFakeDatabases(dbs: IDBDatabase[]) {
+    this.#fakeDatabases = dbs;
+  }
 
-#### 3. Demo integration
-- A demo HTML page should include:
-  ```html
-  <script type="module" src="/fakeData.ts"></script>
-  <script type="module" src="/index.ts"></script>
+  static clearFakeDatabases() {
+    this.#fakeDatabases = [];
+  }
+
+  static async databases(): Promise<IDBDatabase[]> {
+    if (this.#fakeDatabases.length) return this.#fakeDatabases;
+    return (await window.indexedDB.databases?.()) || [];
+  }
+
+  static async open(name: string): Promise<IDBDatabase> {
+    if (this.#fakeDatabases.length) {
+      const db = this.#fakeDatabases.find(db => db.name === name);
+      if (!db) throw new Error(`Fake DB '${name}' not found`);
+      return db;
+    }
+    return indexedDB.open(name);
+  }
   ```
-- `fakeData.ts` should assign data to `window.fakeDb` as an exported constant.
-- Support full TypeScript type checking in `fakeData.ts`.
 
-#### 4. Types
-- Define `FakeDatabase` interface in a shared `types.ts`.
-- Ensure fake data is validated against this interface at runtime.
+#### 2. Add helper: `loadFakeDatabasesFromJson(jsonDef: FakeDbJson[])`
+- Converts typed JSON into populated `IDBDatabase` objects using `fake-indexeddb`.
 
----
-
-### 📁 File Changes
-
-| File | Change |
-|------|--------|
-| `src/index.ts` | Add conditional fakeDb logic before constructing `DatabaseService`. |
-| `src/services/db.ts` | Accept optional injected fake DB implementation. |
-| `src/types.d.ts` | Add `FakeDatabase` interface. |
-| `fakeData.ts` | Example TypeScript file with sample in-memory DB. |
-| `demo/index.html` | Sample HTML file that loads `fakeData.ts` before `index.ts`. |
+#### 3. Update `index.ts`
+- If `window.fakeData` is present:
+  - Call the helper
+  - Pass result to `DatabaseService.useFakeDatabases(...)`
 
 ---
 
-### ✅ Test Case (Playwright or Jest)
+### 📁 Files Affected
 
-Create a Playwright test:
+| File             | Description                                     |
+|------------------|-------------------------------------------------|
+| `DatabaseService.ts` | Add static registry, override methods         |
+| `fakeData.ts`    | Export JSON array of fake database definitions |
+| `index.ts`       | Detect and load fakeData                       |
+| `helpers/fakeDb.ts` | Implements `loadFakeDatabasesFromJson(...)` using `fake-indexeddb` |
+
+---
+
+### ✅ Success Criteria
+
+- [ ] Real `IDBDatabase` access is bypassed when `fakeData` is present
+- [ ] JSON structure for fake DBs is clear and type-checked
+- [ ] Fake DBs support reads/writes during demo
+- [ ] Demo page loads with `DatabaseService` working entirely in-memory
+- [ ] Behavior matches live version in all core flows
+
+---
+
+### 🔍 Types
 
 ```ts
-test('loads fake data from fakeData.ts', async ({ page }) => {
-  await page.goto('/demo/index.html');
-  await expect(page.locator('.feedback-comment')).toHaveCount(3); // based on fake data
-});
+export interface FakeDbJson {
+  name: string;
+  version: number;
+  objectStores: {
+    name: string;
+    keyPath: string;
+    data: any[];
+  }[];
+}
 ```
 
 ---
 
-### 🧪 Success Criteria
+### 🧪 Example Use in Demo Page
 
-- [ ] Demo page renders UI using fake data only (no persistent IndexedDB used)
-- [ ] Switching between pages with different `fakeData.ts` loads different datasets
-- [ ] No changes required to production code using real IndexedDB
-- [ ] Demo data is fully type-checked via TS
-- [ ] Tests confirm that fake data loads and populates the app
-
----
-
-### 🗂️ Output
-
-- [ ] `src/index.ts` patch for conditional DB load
-- [ ] Updated `src/services/db.ts`
-- [ ] `fakeData.ts` example
-- [ ] Working demo HTML
-- [ ] Test verifying fake DB load
+```html
+<script type="module" src="/fakeData.ts"></script>
+<script type="module" src="/index.ts"></script>
+```

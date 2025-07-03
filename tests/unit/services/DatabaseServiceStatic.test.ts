@@ -69,7 +69,7 @@ describe('DatabaseService Static Methods', () => {
       const db3 = await createFakeDatabase('other-db', { id: 'pkg3', name: 'Package 3' }) // Non-BackChannel DB
 
       // Initialize the static array with the fake databases
-      DatabaseService.initFakeDatabases([db1, db2, db3])
+      DatabaseService.useFakeDatabases([db1, db2, db3])
 
       // Call the method
       const databases = await DatabaseService.getAllBackChannelDatabases()
@@ -84,7 +84,7 @@ describe('DatabaseService Static Methods', () => {
     it('should return an empty array when no BackChannel databases exist', async () => {
       // Initialize with non-BackChannel databases
       const db = await createFakeDatabase('other-db', { id: 'pkg1', name: 'Package 1' })
-      DatabaseService.initFakeDatabases([db])
+      DatabaseService.useFakeDatabases([db])
 
       // Call the method
       const databases = await DatabaseService.getAllBackChannelDatabases()
@@ -100,7 +100,7 @@ describe('DatabaseService Static Methods', () => {
       const db = await createFakeDatabase('bc-storage-test123', { id: 'pkg1', name: 'Package 1' })
 
       // Initialize the static array
-      DatabaseService.initFakeDatabases([db])
+      DatabaseService.useFakeDatabases([db])
 
       // Call the method - note we pass just the ID part, not the full name
       const exists = await DatabaseService.databaseExists('test123')
@@ -114,7 +114,7 @@ describe('DatabaseService Static Methods', () => {
       const db = await createFakeDatabase('bc-storage-test123', { id: 'pkg1', name: 'Package 1' })
 
       // Initialize the static array
-      DatabaseService.initFakeDatabases([db])
+      DatabaseService.useFakeDatabases([db])
 
       // Call the method with a non-existent ID
       const exists = await DatabaseService.databaseExists('nonexistent')
@@ -140,7 +140,7 @@ describe('DatabaseService Static Methods', () => {
       })
 
       // Initialize the static array
-      DatabaseService.initFakeDatabases([db1, db2])
+      DatabaseService.useFakeDatabases([db1, db2])
 
       // Call the method with a URL that should match the first package
       const matches = await DatabaseService.searchByUrl('https://example.com/app1/page')

@@ -37,18 +37,13 @@ class DatabaseService {
   private idb: IDBFactory
 
   /**
-   * Constructor for DatabaseService
-   * @param documentTitle - Title of the document for database naming
-   * @param packageData - Optional package data to initialize with
-   * @param idb - Optional IndexedDB factory (e.g., fake-indexeddb for testing)
+   * Static method to use fake databases for testing
+   * This method is used to inject fake databases for testing purposes
+   * @param dbs - Array of fake database objects to use for testing
    */
-  /**
-   * Static method to initialize fake databases for testing
-   * @param databases - Array of fake database objects to use for testing
-   */
-  static initFakeDatabases(databases: IDBDatabase[] = []): void {
+  static useFakeDatabases(dbs: IDBDatabase[] = []): void {
     this.fakeDatabases.clear()
-    databases.forEach(db => {
+    dbs.forEach(db => {
       if (db && db.name) {
         this.fakeDatabases.set(db.name, db)
       }
@@ -57,9 +52,44 @@ class DatabaseService {
 
   /**
    * Static method to clear fake databases
+   * This method is used to clear all fake databases
    */
   static clearFakeDatabases(): void {
     this.fakeDatabases.clear()
+  }
+
+  /**
+   * Static method to get all databases
+   * This method returns fake databases if they exist, otherwise it returns real databases
+   * @returns Promise resolving to an array of database info objects
+   */
+  static async databases(): Promise<IDBDatabaseInfo[]> {
+    if (this.fakeDatabases.size > 0) {
+      // Return fake databases as IDBDatabaseInfo objects
+      return Array.from(this.fakeDatabases.keys()).map(name => ({ name }))
+    }
+    // Return real databases
+    return (await window.indexedDB.databases?.()) || []
+  }
+
+  /**
+   * Static method to open a database
+   * This method returns a fake database if it exists, otherwise it opens a real database
+   * @param name - Database name to open
+   * @returns Promise resolving to an IDBDatabase object
+   */
+  static async open(name: string): Promise<IDBDatabase> {
+    if (this.fakeDatabases.size > 0) {
+      const db = this.fakeDatabases.get(name)
+      if (!db) throw new Error(`Fake DB '${name}' not found`)
+      return db
+    }
+    // Open real database
+    return new Promise<IDBDatabase>((resolve, reject) => {
+      const request = window.indexedDB.open(name)
+      request.onsuccess = (event: any) => resolve(event.target.result)
+      request.onerror = (event: any) => reject(event.target.error)
+    })
   }
 
   /**
