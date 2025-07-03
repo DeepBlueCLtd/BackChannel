@@ -22,9 +22,19 @@ export class BackChannelBadge extends LitElement {
     }
   }
 
+  // TypeScript declaration for the enabled property
+  declare enabled: boolean
+
   constructor() {
     super()
     this.enabled = false
+  }
+
+  /**
+   * Toggle the enabled state when clicked
+   */
+  private _handleClick() {
+    this.enabled = !this.enabled
   }
 
   /**
@@ -56,7 +66,7 @@ export class BackChannelBadge extends LitElement {
    * Render the component
    */
   render() {
-    return html`<div>BC</div>`
+    return html`<div @click=${this._handleClick}>BC</div>`
   }
 }
 
