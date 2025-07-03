@@ -1,67 +1,27 @@
-/* global console, window, localStorage */
-
-/**
- * Types for DatabaseService
- */
-
-/**
- * Package data interface
- */
-export interface PackageData {
-  id?: string
-  name?: string
-  version?: string
-  rootURL?: string
-  [key: string]: any // Allow for additional properties
-}
-
-/**
- * Comment data interface
- */
-export interface CommentData {
-  timestamp: number
-  xpath: string
-  elementText: string
-  feedback: string
-  pageUrl: string
-  documentTitle: string
-  [key: string]: any // Allow for additional properties
-}
-
-/**
- * Database match result interface
- */
-export interface DatabaseMatch {
-  dbId: string
-  dbName?: string
-  packageData: PackageData
-}
-
-/**
- * Active feedback package result interface
- */
-export interface ActiveFeedbackPackage {
-  dbId: string
-  packageData: PackageData
-}
-
 /**
  * DatabaseService - IndexedDB wrapper for BackChannel
  * Provides storage functionality for packages and comments
  */
-export class DatabaseService {
-  dbName: string
-  dbVersion: number
-  db: IDBDatabase | null
-  isSupported: boolean
-  initialPackageData: PackageData | null
+
+// Reference DOM types for IndexedDB
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
+
+import type { Package, Comment, DatabaseMatch, ActiveFeedbackPackage } from '../types'
+
+class DatabaseService {
+  private dbName: string
+  private dbVersion: number
+  private db: IDBDatabase | null
+  private isSupported: boolean
+  private initialPackageData: Package | null
 
   /**
    * Constructor for DatabaseService
    * @param documentTitle - Title of the document for database naming
    * @param packageData - Optional package data to initialize with
    */
-  constructor(documentTitle?: string, packageData: PackageData | null = null) {
+  constructor(documentTitle?: string, packageData: Package | null = null) {
     // Generate a database ID using the last 6 digits of the timestamp if not provided
     const dbId = documentTitle || this._generateDatabaseId()
     this.dbName = `bc-storage-${this._sanitizeDbName(dbId)}`
@@ -224,7 +184,7 @@ export class DatabaseService {
           normalizedCurrentUrl.startsWith(normalizedCachedRootUrl))
       ) {
         try {
-          const packageData = JSON.parse(cachedPackage) as PackageData & { dbId: string }
+          const packageData = JSON.parse(cachedPackage) as Package & { dbId: string }
           const dbId = packageData.dbId
           delete packageData.dbId // Remove the dbId from the package data
 
@@ -446,71 +406,85 @@ export class DatabaseService {
     }
   }
 
+  // ========== Package Store Methods ==========
+
   /**
-   * Adds a package to the database
+   * Adds a new package to the store if the store is empty
+   * Private method - only used internally
    * @param packageData - Package data to add
-   * @returns Added package data or null if failed
+   * @returns ID of the added package or null on error
    * @private
    */
-  private async _addPackage(packageData: PackageData): Promise<PackageData | null> {
+  private async _addPackage(packageData: Package): Promise<string | null> {
+    // Clear the package cache when creating a new package
+    DatabaseService.clearPackageCache()
     if (!this.db) {
-      console.error('Database not initialized')
       return null
     }
 
     try {
-      return new Promise<PackageData | null>(resolve => {
+      // First check if any packages already exist
+      const hasPackages = await this._checkPackagesExist()
+      if (hasPackages) {
+        console.warn(
+          'Cannot add new package: database already has a package. Use updatePackage instead.'
+        )
+        return null
+      }
+
+      // Ensure the package has an ID
+      if (!packageData.id) {
+        packageData.id = this._generatePackageId()
+      }
+
+      return new Promise<string | null>(resolve => {
         const transaction = this.db!.transaction(['packages'], 'readwrite')
         const store = transaction.objectStore('packages')
-
-        // Ensure the package has an ID
-        if (!packageData.id) {
-          packageData.id = this._generatePackageId()
-        }
-
         const request = store.add(packageData)
 
         request.onsuccess = () => {
-          resolve(packageData)
+          resolve(packageData.id || null)
         }
 
-        request.onerror = (event) => {
+        request.onerror = (event: Event) => {
           console.error('Error adding package:', (event.target as IDBRequest).error)
           resolve(null)
         }
       })
     } catch (error) {
-      console.error('Error in _addPackage:', error)
+      console.error('Error in addPackage:', error)
       return null
     }
   }
 
   /**
    * Gets the package from the database
+   * There should only be one package in the database
    * @returns Package data or null if not found
+   * @throws {Error} - If more than one package exists in the database
    */
-  async getPackage(): Promise<PackageData | null> {
+  async getPackage(): Promise<Package | null> {
     if (!this.db) {
-      console.error('Database not initialized')
       return null
     }
 
     try {
-      return new Promise<PackageData | null>(resolve => {
+      return new Promise<Package | null>((resolve, reject) => {
         const transaction = this.db!.transaction(['packages'], 'readonly')
         const store = transaction.objectStore('packages')
         const request = store.getAll()
 
         request.onsuccess = () => {
-          const packages = request.result
-          if (packages && packages.length > 0) {
-            resolve(packages[0])
-          } else {
-            resolve(null)
+          if (request.result && request.result.length > 1) {
+            reject(
+              new Error('Database integrity error: More than one package exists in the database')
+            )
+            return
           }
+          resolve(request.result && request.result.length === 1 ? request.result[0] : null)
         }
 
-        request.onerror = (event) => {
+        request.onerror = (event: Event) => {
           console.error('Error getting package:', (event.target as IDBRequest).error)
           resolve(null)
         }
@@ -522,69 +496,78 @@ export class DatabaseService {
   }
 
   /**
-   * Updates the package in the database
-   * @param packageData - Updated package data
-   * @returns Updated package data or null if failed
+   * Static method to clear the package cache in localStorage
+   * This should be called when creating, updating, or deleting packages
    */
-  async updatePackage(packageData: PackageData): Promise<PackageData | null> {
-    if (!this.db) {
-      console.error('Database not initialized')
-      return null
+  static clearPackageCache(): void {
+    try {
+      // Only attempt to clear cache if localStorage is available
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('bc_root')
+        localStorage.removeItem('bc_package')
+      }
+    } catch (error) {
+      console.warn('Error clearing package cache:', error)
+    }
+  }
+
+  /**
+   * Updates an existing package
+   * @param packageData - Updated package data
+   * @returns Whether the update was successful
+   */
+  async updatePackage(packageData: Package): Promise<boolean> {
+    // Clear the package cache when updating a package
+    DatabaseService.clearPackageCache()
+
+    if (!this.db || !packageData.id) {
+      return false
     }
 
     try {
-      // Get the current package to ensure we have the ID
-      const currentPackage = await this.getPackage()
-      if (!currentPackage) {
-        // If no package exists, add a new one
-        return this._addPackage(packageData)
-      }
-
-      // Ensure we keep the same ID
-      packageData.id = currentPackage.id
-
-      return new Promise<PackageData | null>(resolve => {
+      return new Promise<boolean>(resolve => {
         const transaction = this.db!.transaction(['packages'], 'readwrite')
         const store = transaction.objectStore('packages')
         const request = store.put(packageData)
 
         request.onsuccess = () => {
-          resolve(packageData)
+          resolve(true)
         }
 
-        request.onerror = (event) => {
+        request.onerror = (event: Event) => {
           console.error('Error updating package:', (event.target as IDBRequest).error)
-          resolve(null)
+          resolve(false)
         }
       })
     } catch (error) {
       console.error('Error in updatePackage:', error)
-      return null
+      return false
     }
   }
 
+  // ========== Comment Store Methods ==========
+
   /**
-   * Adds a comment to the database
+   * Adds a new comment to the store
    * @param commentData - Comment data to add
-   * @returns Added comment data or null if failed
+   * @returns Timestamp of the added comment or null on error
    */
-  async addComment(commentData: CommentData): Promise<CommentData | null> {
+  async addComment(commentData: Comment): Promise<number | null> {
     if (!this.db) {
-      console.error('Database not initialized')
       return null
     }
 
     try {
-      return new Promise<CommentData | null>(resolve => {
+      return new Promise<number | null>(resolve => {
         const transaction = this.db!.transaction(['comments'], 'readwrite')
         const store = transaction.objectStore('comments')
         const request = store.add(commentData)
 
         request.onsuccess = () => {
-          resolve(commentData)
+          resolve(commentData.timestamp)
         }
 
-        request.onerror = (event) => {
+        request.onerror = (event: Event) => {
           console.error('Error adding comment:', (event.target as IDBRequest).error)
           resolve(null)
         }
@@ -596,77 +579,43 @@ export class DatabaseService {
   }
 
   /**
-   * Gets all comments from the database
-   * @returns Array of comments or null if failed
+   * Gets a comment by timestamp
+   * @param timestamp - Comment timestamp
+   * @returns Comment data or null if not found
    */
-  async getAllComments(): Promise<CommentData[] | null> {
+  async getComment(timestamp: number): Promise<Comment | null> {
     if (!this.db) {
-      console.error('Database not initialized')
       return null
     }
 
     try {
-      return new Promise<CommentData[] | null>(resolve => {
+      return new Promise<Comment | null>(resolve => {
         const transaction = this.db!.transaction(['comments'], 'readonly')
         const store = transaction.objectStore('comments')
-        const request = store.getAll()
+        const request = store.get(timestamp)
 
         request.onsuccess = () => {
-          resolve(request.result)
+          resolve(request.result || null)
         }
 
-        request.onerror = (event) => {
-          console.error('Error getting comments:', (event.target as IDBRequest).error)
+        request.onerror = (event: Event) => {
+          console.error('Error getting comment:', (event.target as IDBRequest).error)
           resolve(null)
         }
       })
     } catch (error) {
-      console.error('Error in getAllComments:', error)
+      console.error('Error in getComment:', error)
       return null
     }
   }
 
   /**
-   * Gets comments for a specific page URL
-   * @param pageUrl - URL of the page to get comments for
-   * @returns Array of comments or null if failed
+   * Updates an existing comment
+   * @param commentData - Updated comment data
+   * @returns Whether the update was successful
    */
-  async getCommentsForPage(pageUrl: string): Promise<CommentData[] | null> {
-    if (!this.db) {
-      console.error('Database not initialized')
-      return null
-    }
-
-    try {
-      return new Promise<CommentData[] | null>(resolve => {
-        const transaction = this.db!.transaction(['comments'], 'readonly')
-        const store = transaction.objectStore('comments')
-        const index = store.index('pageUrl')
-        const request = index.getAll(pageUrl)
-
-        request.onsuccess = () => {
-          resolve(request.result)
-        }
-
-        request.onerror = (event) => {
-          console.error('Error getting comments for page:', (event.target as IDBRequest).error)
-          resolve(null)
-        }
-      })
-    } catch (error) {
-      console.error('Error in getCommentsForPage:', error)
-      return null
-    }
-  }
-
-  /**
-   * Deletes a comment from the database
-   * @param timestamp - Timestamp of the comment to delete
-   * @returns Whether deletion was successful
-   */
-  async deleteComment(timestamp: number): Promise<boolean> {
-    if (!this.db) {
-      console.error('Database not initialized')
+  async updateComment(commentData: Comment): Promise<boolean> {
+    if (!this.db || !commentData.timestamp) {
       return false
     }
 
@@ -674,15 +623,57 @@ export class DatabaseService {
       return new Promise<boolean>(resolve => {
         const transaction = this.db!.transaction(['comments'], 'readwrite')
         const store = transaction.objectStore('comments')
-        const request = store.delete(timestamp)
+        const request = store.put(commentData)
 
         request.onsuccess = () => {
           resolve(true)
         }
 
-        request.onerror = (event) => {
-          console.error('Error deleting comment:', (event.target as IDBRequest).error)
+        request.onerror = (event: Event) => {
+          console.error('Error updating comment:', (event.target as IDBRequest).error)
           resolve(false)
+        }
+      })
+    } catch (error) {
+      console.error('Error in updateComment:', error)
+      return false
+    }
+  }
+
+  /**
+   * Deletes a comment by timestamp
+   * @param timestamp - Comment timestamp to delete
+   * @returns Whether the deletion was successful
+   */
+  async deleteComment(timestamp: number | string): Promise<boolean> {
+    if (!this.db) {
+      return false
+    }
+
+    try {
+      return new Promise<boolean>(resolve => {
+        const transaction = this.db!.transaction(['comments'], 'readwrite')
+        const store = transaction.objectStore('comments')
+        // if timestamp is a string, convert it to an integer
+        if (typeof timestamp === 'string') {
+          timestamp = parseInt(timestamp)
+        }
+        // check object with this key exists
+        const getRequest = store.get(timestamp)
+        getRequest.onsuccess = () => {
+          if (getRequest.result) {
+            const request = store.delete(timestamp)
+            request.onsuccess = () => {
+              resolve(true)
+            }
+            request.onerror = (event: Event) => {
+              console.error('Error deleting comment:', (event.target as IDBRequest).error)
+              resolve(false)
+            }
+          } else {
+            console.log('Comment not found', timestamp, typeof timestamp)
+            resolve(false)
+          }
         }
       })
     } catch (error) {
@@ -692,61 +683,34 @@ export class DatabaseService {
   }
 
   /**
-   * Deletes the database
-   * @returns Whether deletion was successful
+   * Gets all comments from the store
+   * @returns Array of comments or null on error
    */
-  async deleteDatabase(): Promise<boolean> {
-    this.close()
+  async getAllComments(): Promise<Comment[] | null> {
+    if (!this.db) {
+      return null
+    }
 
     try {
-      return new Promise<boolean>(resolve => {
-        const request = window.indexedDB.deleteDatabase(this.dbName)
+      return new Promise<Comment[] | null>(resolve => {
+        const transaction = this.db!.transaction(['comments'], 'readonly')
+        const store = transaction.objectStore('comments')
+        const request = store.getAll()
 
         request.onsuccess = () => {
-          console.log(`Database ${this.dbName} deleted successfully`)
-          resolve(true)
+          resolve(request.result || [])
         }
 
-        request.onerror = (event) => {
-          console.error('Error deleting database:', (event.target as IDBRequest).error)
-          resolve(false)
+        request.onerror = (event: Event) => {
+          console.error('Error getting all comments:', (event.target as IDBRequest).error)
+          resolve(null)
         }
       })
     } catch (error) {
-      console.error('Error in deleteDatabase:', error)
-      return false
-    }
-  }
-
-  /**
-   * Static method to delete a specific database by ID
-   * @param dbId - ID of the database to delete
-   * @returns Whether deletion was successful
-   */
-  static async deleteSpecificDatabase(dbId: string): Promise<boolean> {
-    if (!DatabaseService.isSupported()) {
-      throw new Error('IndexedDB is not supported in this browser')
-    }
-
-    const dbName = `bc-storage-${dbId}`
-
-    try {
-      return new Promise<boolean>(resolve => {
-        const request = window.indexedDB.deleteDatabase(dbName)
-
-        request.onsuccess = () => {
-          console.log(`Database ${dbName} deleted successfully`)
-          resolve(true)
-        }
-
-        request.onerror = (event) => {
-          console.error('Error deleting database:', (event.target as IDBRequest).error)
-          resolve(false)
-        }
-      })
-    } catch (error) {
-      console.error('Error in deleteSpecificDatabase:', error)
-      return false
+      console.error('Error in getAllComments:', error)
+      return null
     }
   }
 }
+
+export { DatabaseService }
