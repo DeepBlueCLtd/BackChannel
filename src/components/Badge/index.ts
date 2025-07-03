@@ -18,7 +18,7 @@ export class BackChannelBadge extends LitElement {
    */
   static get properties() {
     return {
-      enabled: { type: Boolean, reflect: true }
+      enabled: { type: Boolean, reflect: true },
     }
   }
 
@@ -31,10 +31,28 @@ export class BackChannelBadge extends LitElement {
   }
 
   /**
-   * Toggle the enabled state when clicked
+   * Handle click based on the enabled state
+   * If enabled, open the capture sidebar
+   * If disabled, open the package creation dialog
    */
   private _handleClick() {
-    this.enabled = !this.enabled
+    if (this.enabled) {
+      // Dispatch event to open the capture sidebar
+      this.dispatchEvent(
+        new CustomEvent('open-sidebar', {
+          bubbles: true,
+          composed: true,
+        })
+      )
+    } else {
+      // Dispatch event to open the package creation dialog
+      this.dispatchEvent(
+        new CustomEvent('open-package-dialog', {
+          bubbles: true,
+          composed: true,
+        })
+      )
+    }
   }
 
   /**
