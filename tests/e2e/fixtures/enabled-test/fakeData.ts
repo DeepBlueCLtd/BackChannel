@@ -4,7 +4,7 @@
  * into IDBDatabase instances using fake-indexeddb
  */
 
-import { Package, Comment } from '../../../../../src/types'
+import { Package, Comment } from '../../../../src/types'
 
 export interface FakedbPackageStore {
   name: string
