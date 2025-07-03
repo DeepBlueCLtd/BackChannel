@@ -3,6 +3,10 @@
  * This component handles the UI for creating new feedback packages
  */
 
+/// <reference lib="dom" />
+
+/* global CustomEvent, Event */
+
 import { LitElement, html, css } from 'lit'
 import { customElement } from 'lit/decorators.js'
 import './PackageDialog.css'

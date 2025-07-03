@@ -7,6 +7,8 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
+/* global CustomEvent, Event */
+
 import { getActiveFeedbackPackage } from './services/packageService'
 import './components/Badge'
 import './components/Sidebar'

@@ -3,6 +3,10 @@
  * This component handles the rendering and state management of the BackChannel sidebar
  */
 
+/// <reference lib="dom" />
+
+/* global CustomEvent, Event, HTMLTextAreaElement */
+
 import { LitElement, html, css } from 'lit'
 import { customElement } from 'lit/decorators.js'
 import './Sidebar.css'

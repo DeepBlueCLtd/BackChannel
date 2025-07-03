@@ -3,6 +3,10 @@
  * This component handles the rendering and state management of the BackChannel icon
  */
 
+/// <reference lib="dom" />
+
+/* global CustomEvent */
+
 import { LitElement, html, css } from 'lit'
 import { customElement } from 'lit/decorators.js'
 
@@ -31,13 +35,11 @@ export class BackChannelBadge extends LitElement {
   }
 
   /**
-   * Handle click based on the enabled state
-   * If enabled, open the capture sidebar
-   * If disabled, open the package creation dialog
+   * Handle click event
    */
   private _handleClick() {
     if (this.enabled) {
-      // Dispatch event to open the capture sidebar
+      // If badge is enabled, open the sidebar
       this.dispatchEvent(
         new CustomEvent('open-sidebar', {
           bubbles: true,
@@ -45,7 +47,7 @@ export class BackChannelBadge extends LitElement {
         })
       )
     } else {
-      // Dispatch event to open the package creation dialog
+      // If badge is disabled, open the package dialog
       this.dispatchEvent(
         new CustomEvent('open-package-dialog', {
           bubbles: true,
