@@ -42,3 +42,5 @@ export interface ActiveFeedbackPackage {
   dbId: string
   packageData: Package
 }
+
+// No need for global IndexedDB declarations as they're provided by the DOM lib

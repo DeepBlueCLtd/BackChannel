@@ -7,7 +7,17 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
+// Use any type for IndexedDB interfaces to avoid linter issues
+type IDBDatabase = any
+type IDBRequest = any
+type IDBVersionChangeEvent = any
+
 import type { Package, Comment, DatabaseMatch, ActiveFeedbackPackage } from '../types'
+
+// Import Event type for IndexedDB event handlers
+interface Event {
+  target: IDBRequest
+}
 
 class DatabaseService {
   private dbName: string
@@ -108,7 +118,9 @@ class DatabaseService {
       // Get all available databases
       const databases = await window.indexedDB.databases()
       // Filter to only include BackChannel databases and return their names
-      return databases.filter(db => db.name.startsWith('bc-storage-')).map(db => db.name)
+      return databases
+        .filter(db => db.name && db.name.startsWith('bc-storage-'))
+        .map(db => db.name as string)
     } catch (error) {
       console.error('Error listing databases:', error)
       throw new Error('Failed to list databases')
@@ -153,7 +165,9 @@ class DatabaseService {
    * @param currentUrl - The URL of the current page
    * @returns Matching package data and database ID, or null if not found
    */
-  static async getActiveFeedbackPackageForUrl(currentUrl: string): Promise<ActiveFeedbackPackage | null> {
+  static async getActiveFeedbackPackageForUrl(
+    currentUrl: string
+  ): Promise<ActiveFeedbackPackage | null> {
     if (!currentUrl) {
       console.error('Current URL is required')
       return null
@@ -184,12 +198,12 @@ class DatabaseService {
           normalizedCurrentUrl.startsWith(normalizedCachedRootUrl))
       ) {
         try {
-          const packageData = JSON.parse(cachedPackage) as Package & { dbId: string }
+          const packageData = JSON.parse(cachedPackage) as Package & { dbId?: string }
           const dbId = packageData.dbId
           delete packageData.dbId // Remove the dbId from the package data
 
           return {
-            dbId,
+            dbId: dbId as string,
             packageData,
           }
         } catch (parseError) {
