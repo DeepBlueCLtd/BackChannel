@@ -19,13 +19,16 @@ This document breaks down the full implementation of BackChannel, covering both 
 
 ### Package Creation
 - [ ] Check if there is an active feedback package for this URL
-- [ ] If there is, open it
-- [ ] If there isn't, provide some user guidance on how to create one, including inviting user to navigate to welcome/home page, and create one
-- [ ] Show dialog to confirm/edit URL prefix, document name and author initials
-- [ ] Store feedback package metadata in IndexedDB
-- [ ] Load active package on pages matching prefix
+- [ ] If there is, show enabled BC icon. Load feedback package in background.
+- [ ] If there isn't, show disabled BC icon
+- [ ] Clicking on enabled BC icon opens capture feedback sidebar
+- [ ] Clicking on disabled BC icon opens package creation dialog, which takes document title, author name, and (editable) URL prefix, with instructions to navigate to root before creating feedback package. Store feedback package metadata in IndexedDB
+- [ ] When capture sidebar is open, decorations on page show which elements have comment. Hovering over them shows the comment.
 
 ### Commenting
+- [ ] Capture sidebar still has BC icon at top, clicking on it collapses the sidebar.
+- [ ] Capture sidebar includes `Capture Feedback` and `Export` buttons
+- [ ] On clicking on `Capture Feedback`, UI goes into `Capture mode`. Sidebar is hidden, though floating `Cancel Capture` button remains.  Hovering over html elements highlights the element. Clicking on an element opens the sidebar, with a `capture feedback` form open at the top, to take a comment.
 - [ ] Add comment on DOM click (default fallback if no `.reviewable`)
 - [ ] Show comment UI with editable text.  Show this form in a compact way at the top of the BC sidebar
 - [ ] Save comment to `comments` table with metadata
@@ -33,27 +36,30 @@ This document breaks down the full implementation of BackChannel, covering both 
 - [ ] List current page comments in sidebar
 
 ### Navigation
-- [ ] Detect feedback package match on other pages
+- [ ] Detect feedback package match on hyperlinked documents, show decoration when comments availble for that document.
 - [ ] Append comments to same package across document
 
 ---
 
 ## ✅ Phase 3: Capture Mode – Persistence and Export
 
-- [ ] Persist comments and badges after reload
+- [ ] Persist comments and badges after reload, by storing in indexed db.
+- [ ] Persist last used url (and database name) in local storage (cookie)
 - [ ] List and filter comments by page
 - [ ] Export CSV for full feedback package (merged rows)
 - [ ] Include document name, page title, URL, label, timestamp, initials
-- [ ] Note: CSV will have some `organisational` data at head: document title, url ,author initials.
+- [ ] Note: CSV will have some `organisational` data at head: document title, url ,author name.
 
 ---
 
 ## ✅ Phase 4: Review Mode – Core Functionality
 
 ### Import and Display
+- [ ] BC in feedback mode also shown in grey/blue (disabled) mode.
+- [ ] While app opens (by default) in capture mode, it can be opened in feedback mode by clicking on the BC icon in the top-right of the page.  Or, if there is a review feedback package present for this page URL, then it will open in feedback mode.
 - [ ] Enable CSV import via file input
 - [ ] Parse CSV into in-memory comment list
-- [ ] Load comments into sidebar
+- [ ] Load comments into sidebar¦
 - [ ] Highlight comments for current page
 - [ ] If an in-page link is to a URL for which there is a feedback comment, show "open comment in linked page" decoration to UR.  This decoration will include an arrow.
 - [ ] Show off-page comments in sidebar with page label + link
