@@ -21,6 +21,17 @@ const handleBadgeClick = (isEnabled: boolean) => {
   } else {
     console.log('Clicked disabled BC icon - should open package creation dialog')
     // TODO: Implement opening the package creation dialog
+
+    // Mock: Toggle badge from disabled to enabled when clicked
+    if (bcBadgeElement) {
+      // Remove the current badge
+      bcBadgeElement.remove()
+
+      // Show the badge in enabled state
+      showBackChannelBadge(true)
+
+      console.log('Mock: Badge toggled from disabled to enabled')
+    }
   }
 }
 
