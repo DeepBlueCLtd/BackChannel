@@ -4,6 +4,7 @@
  */
 
 import { getActiveFeedbackPackage } from './services/packageService'
+import './components/Badge'
 
 // Wait for the DOM to be fully loaded before initializing
 document.addEventListener('DOMContentLoaded', () => {

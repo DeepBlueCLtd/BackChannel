@@ -4,25 +4,13 @@
  */
 
 import { LitElement, html } from 'lit'
-import { customElement, property } from 'lit/decorators.js'
+import { customElement } from 'lit/decorators.js'
 
 /**
  * BackChannel Badge Web Component
  */
 @customElement('bc-badge')
 export class BackChannelBadge extends LitElement {
-  /**
-   * Whether the badge is enabled (active)
-   */
-  @property({ type: Boolean, reflect: true })
-  enabled = false
-
-  /**
-   * Position of the badge on the page
-   */
-  @property({ type: String, reflect: true })
-  position = 'top-right'
-
   /**
    * Render the component
    */
