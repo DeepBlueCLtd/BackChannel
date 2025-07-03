@@ -52,6 +52,7 @@ function showBackChannelBadge(isEnabled: boolean): void {
   console.log(`BackChannel badge shown in ${isEnabled ? 'enabled' : 'disabled'} state`)
 
   // Check for fake database definitions and load them if available
+  console.log('checking for fake data', typeof window !== 'undefined', (window as any).fakeData)
   if (typeof window !== 'undefined' && (window as any).fakeData) {
     const fakeData = (window as any).fakeData as FakeDbJson[]
     console.log('Fake database definitions detected:', fakeData)
