@@ -14,6 +14,20 @@ export class BackChannelBadge extends LitElement {
   // Badge is hardcoded to top-right position as requested
 
   /**
+   * Whether the badge is enabled (active)
+   */
+  static get properties() {
+    return {
+      enabled: { type: Boolean, reflect: true }
+    }
+  }
+
+  constructor() {
+    super()
+    this.enabled = false
+  }
+
+  /**
    * CSS styles for the component
    */
   static styles = css`
