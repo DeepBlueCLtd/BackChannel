@@ -1,209 +1,51 @@
-export interface BackChannelConfig {
-  requireInitials: boolean
-  storageKey: string
+/**
+ * BackChannel - Main Entry Point
+ * This file initializes the BackChannel application and handles the main app logic
+ */
+
+import { getActiveFeedbackPackage } from './services/packageService'
+import './components/Badge'
+
+// Wait for the DOM to be fully loaded before initializing
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Welcome to BackChannel')
+  initBackChannel()
+})
+
+/**
+ * Initialize the BackChannel application
+ */
+async function initBackChannel(): Promise<void> {
+  // Get the current URL
+  const currentUrl = window.location.href
+  console.log('Current URL:', currentUrl)
+
+  // Check if there's an active feedback package for this URL
+  const activeFeedbackPackage = await getActiveFeedbackPackage(currentUrl)
+
+  // Determine if BackChannel should be enabled for this page
+  const isEnabled = !!activeFeedbackPackage
+  console.log(`BackChannel is ${isEnabled ? 'ENABLED' : 'DISABLED'} for this page`)
+
+  // Show the BackChannel badge
+  showBackChannelBadge(isEnabled)
 }
 
-import { handleElementClick, highlightCommentedElements, clearCommentHighlights } from './dom'
-import { loadComments, saveComment, type CommentEntry } from './storage'
-import { createLaunchButton, renderSidebar, updateLaunchButton, type CommentFormData } from './ui'
-import { exportCommentsToCSV } from './exporter'
+/**
+ * Show the BackChannel badge with appropriate state
+ * @param isEnabled Whether to show the badge in enabled state
+ */
+function showBackChannelBadge(isEnabled: boolean): void {
+  // Create the badge element
+  const badge = document.createElement('bc-badge') as HTMLElement
 
-const BackChannel = {
-  init: (config: BackChannelConfig) => {
-    console.log('BackChannel initialized with config:', config)
+  // Set attributes
+  if (isEnabled) {
+    badge.setAttribute('enabled', '')
+  }
 
-    let isSelectModeActive = false
-    let sidebarEl: HTMLElement | null = null
-    let highlightedEl: HTMLElement | null = null
-    let selectedComment: CommentEntry | null = null
+  // Add to DOM
+  document.body.appendChild(badge)
 
-    const style = document.createElement('style')
-    style.textContent = `
-      .backchannel-highlight {
-        outline: 2px dashed #007bff !important;
-        cursor: crosshair !important;
-      }
-      .backchannel-commented-element {
-        outline: 2px solid #ffc107 !important; /* Yellow outline for commented elements */
-        cursor: pointer !important;
-      }
-      .backchannel-selected-element {
-        outline: 3px solid #0056b3 !important; /* Darker blue for selection */
-        box-shadow: 0 0 10px rgba(0, 86, 179, 0.5);
-      }
-      .backchannel-sidebar-item-selected {
-        background-color: #e7f1ff !important; /* Light blue background for selected sidebar item */
-      }
-    `
-    document.head.appendChild(style)
-
-    const SELECTED_ELEMENT_CLASS = 'backchannel-selected-element'
-    const SELECTED_SIDEBAR_ITEM_CLASS = 'backchannel-sidebar-item-selected'
-
-    function clearSelectedHighlight() {
-      const selectedEl = document.querySelector(`.${SELECTED_ELEMENT_CLASS}`)
-      if (selectedEl) {
-        selectedEl.classList.remove(SELECTED_ELEMENT_CLASS)
-      }
-      const selectedSidebarItem = document.querySelector(`.${SELECTED_SIDEBAR_ITEM_CLASS}`)
-      if (selectedSidebarItem) {
-        selectedSidebarItem.classList.remove(SELECTED_SIDEBAR_ITEM_CLASS)
-      }
-    }
-
-    function highlightElement(event: MouseEvent) {
-      const target = event.target as HTMLElement
-      if (
-        target === highlightedEl ||
-        target.closest(
-          '#backchannel-comment-form, #backchannel-sidebar, #backchannel-launch-button'
-        )
-      ) {
-        return
-      }
-      unhighlightElement()
-      highlightedEl = target
-      highlightedEl.classList.add('backchannel-highlight')
-    }
-
-    function unhighlightElement() {
-      if (highlightedEl) {
-        highlightedEl.classList.remove('backchannel-highlight')
-        highlightedEl = null
-      }
-    }
-
-    function enterSelectMode() {
-      isSelectModeActive = true
-      document.addEventListener('mouseover', highlightElement)
-      document.addEventListener('mouseout', unhighlightElement)
-      if (sidebarEl) {
-        const provideFeedbackButton = sidebarEl.querySelector(
-          '#backchannel-provide-feedback'
-        ) as HTMLElement
-        const cancelButton = sidebarEl.querySelector(
-          '#backchannel-cancel-select-mode'
-        ) as HTMLElement
-        if (provideFeedbackButton) provideFeedbackButton.style.display = 'none'
-        if (cancelButton) cancelButton.style.display = 'inline-block'
-      }
-    }
-
-    function exitSelectMode() {
-      isSelectModeActive = false
-      unhighlightElement()
-      clearSelectedHighlight()
-      document.removeEventListener('mouseover', highlightElement)
-      document.removeEventListener('mouseout', unhighlightElement)
-      if (sidebarEl) {
-        const provideFeedbackButton = sidebarEl.querySelector(
-          '#backchannel-provide-feedback'
-        ) as HTMLElement
-        const cancelButton = sidebarEl.querySelector(
-          '#backchannel-cancel-select-mode'
-        ) as HTMLElement
-        if (provideFeedbackButton) provideFeedbackButton.style.display = 'inline-block'
-        if (cancelButton) cancelButton.style.display = 'none'
-      }
-    }
-
-    function onCommentClick(comment: CommentEntry) {
-      // If clicking the already selected comment, deselect it
-      if (selectedComment && selectedComment.selector === comment.selector) {
-        clearSelectedHighlight()
-        selectedComment = null
-        return
-      }
-
-      clearSelectedHighlight() // Clear previous selection
-      selectedComment = comment // Set new selection
-
-      // Highlight element on page
-      const el = document.querySelector(comment.selector)
-      if (el) {
-        el.classList.add(SELECTED_ELEMENT_CLASS)
-        ;(el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-
-      // Highlight item in sidebar
-      const sidebarItem = document.querySelector(
-        `#backchannel-sidebar li[data-timestamp="${comment.timestamp}"]`
-      )
-      if (sidebarItem) {
-        sidebarItem.classList.add(SELECTED_SIDEBAR_ITEM_CLASS)
-      }
-    }
-
-    async function onExportClick() {
-      const comments = await loadComments(config.storageKey)
-      exportCommentsToCSV(comments)
-    }
-
-    async function onCommentSubmit(label: string, selector: string, data: CommentFormData) {
-      const newComment: CommentEntry = {
-        label,
-        selector,
-        text: data.comment,
-        timestamp: new Date().toISOString(),
-      }
-      const allComments = await saveComment(newComment, config.storageKey)
-      updateLaunchButton(allComments.length)
-      highlightCommentedElements(allComments)
-
-      if (sidebarEl) sidebarEl.remove()
-      sidebarEl = renderSidebar(
-        allComments,
-        onCommentClick,
-        enterSelectMode,
-        exitSelectMode,
-        onExportClick
-      )
-      sidebarEl.style.display = 'block'
-    }
-
-    async function toggleSidebar() {
-      // First time opening
-      if (!sidebarEl) {
-        const initialComments = await loadComments(config.storageKey)
-        sidebarEl = renderSidebar(
-          initialComments,
-          onCommentClick,
-          enterSelectMode,
-          exitSelectMode,
-          onExportClick
-        )
-      }
-
-      if (sidebarEl) {
-        const isVisible = sidebarEl.style.display !== 'none'
-        if (isVisible) {
-          // Hiding sidebar
-          sidebarEl.style.display = 'none'
-          exitSelectMode()
-          clearCommentHighlights()
-          clearSelectedHighlight()
-        } else {
-          // Showing sidebar
-          sidebarEl.style.display = 'block'
-          const comments = await loadComments(config.storageKey)
-          highlightCommentedElements(comments)
-        }
-      }
-    }
-
-    createLaunchButton(toggleSidebar)
-
-    // Set initial comment count on launch button
-    loadComments(config.storageKey).then(initialComments => {
-      updateLaunchButton(initialComments.length)
-    })
-
-    document.addEventListener('click', event => {
-      if (isSelectModeActive) {
-        handleElementClick(event, onCommentSubmit, exitSelectMode)
-      }
-    })
-  },
+  console.log(`BackChannel badge shown in ${isEnabled ? 'enabled' : 'disabled'} state`)
 }
-
-export default BackChannel

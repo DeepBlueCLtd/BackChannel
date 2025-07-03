@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BackChannel Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    h1 {
+      color: #333;
+    }
+    p {
+      margin-bottom: 16px;
+    }
+    .info {
+      background-color: #f0f0f0;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .content-section {
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BackChannel Demo Page</h1>
+    <div>There is demo content for page enablement in <a href="tests/e2e/fixtures/enabled-test/index.html">enabled-test</a></div>
+
+    <div class="info">
+      <p>This is a demo page for testing the BackChannel feedback application.</p>
+      <p>Open the browser console (F12 or Cmd+Option+I) to see the initialization messages.</p>
+    </div>
+    
+    <div class="content-section">
+      <h2>Sample Content</h2>
+      <p>This is a paragraph that could receive feedback. The BackChannel icon should appear in the corner of the screen once implemented.</p>
+      <p>When the BackChannel icon is clicked, it should either:</p>
+      <ul>
+        <li>Open the feedback capture sidebar if a package exists for this URL</li>
+        <li>Open the package creation dialog if no package exists for this URL</li>
+      </ul>
+    </div>
+    
+    <div class="content-section">
+      <h2>Testing Instructions</h2>
+      <p>To test the BackChannel functionality:</p>
+      <ol>
+        <li>Check the console to verify that the application has initialized</li>
+        <li>Verify that the BackChannel icon appears and reflects the correct state</li>
+        <li>Test clicking the icon to ensure the appropriate dialog opens</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Import the BackChannel application script -->
+  <script type="module" src="./src/index.ts"></script>
+</body>
+</html>
