@@ -1,4 +1,4 @@
-import { DatabaseService } from './services/db.js'
+import { DatabaseService } from './services/db'
 
 export interface CommentEntry {
   label: string
@@ -42,7 +42,7 @@ function getDbService(): Promise<DatabaseService> {
 
   dbService = new DatabaseService(documentTitle)
 
-  if (!dbService.isSupported) {
+  if (!DatabaseService.isSupported()) {
     console.warn('IndexedDB is not supported in this browser. Falling back to localStorage.')
     return Promise.reject(new Error('IndexedDB not supported'))
   }
