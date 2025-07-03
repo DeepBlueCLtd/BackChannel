@@ -1,6 +1,7 @@
 # General
 - Start each task by reading the `docs/PRD.md` and `docs/tech-overview.md` files.
 - Ensure I have agreed each task (or sub-task) is complete before moving onto the next incomplete task.
+- For each new task, interview me via multiple choice questions, one at a time, to identify requirements for the planning document.
 
 # General Code Style & Formatting
 - Use English for all code and documentation.
