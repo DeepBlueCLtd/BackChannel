@@ -1,126 +1,131 @@
-# Product Requirements Document: BackChannel
 
-## 1. Product Overview
+# BackChannel Product Requirements Document (PRD)
 
-**BackChannel** is a lightweight, offline-friendly JavaScript plugin that enables users to **capture**, **review**, and **resolve feedback** across one or more static HTML pages. Designed for disconnected or air-gapped environments, it provides structured comment workflows without relying on any network backend. Feedback is stored locally in the browser and exported as human-readable CSV files, which can be shared manually and imported for review.
+## Overview
 
----
-
-## 2. Goals
-
-- Allow feedback to be added to unmodified static HTML content (Capture Mode)
-- Enable document authors to review, filter, and resolve feedback offline (Review Mode)
-- Group feedback across multiple pages into a document-wide “Feedback package”
-- Require no build process, backend, or network connectivity
-- Export and import feedback via CSV
-- Be simple to integrate and operate in legacy and secure environments
+**BackChannel** is a lightweight JavaScript plugin for capturing and reviewing feedback on static web content, particularly designed for offline or air-gapped environments ("the disconnected web"). It supports feedback workflows across single and multi-page document sets.
 
 ---
 
-## 3. Key Features
+## Modes
 
-### 3.1 Capture Mode (Feedback Entry)
-- User selects any visible HTML element to leave a comment
-- Records comment text, timestamp, reviewer initials (if configured)
-- Visually marks elements with feedback
-- Displays feedback in a toggleable sidebar
-- Supports creating a multi-page **Feedback package**:
-  - User initiates the package on a “Welcome” or “Introduction” page
-  - Defines a URL prefix and document name
-  - Feedback added to any page under that prefix is grouped in the same package
-- Stores feedback in a browser IndexedDB instance, scoped to the document package
-- Exports feedback as CSV with required metadata
+### Capture Mode
+Designed for document consumers or reviewers. Enables selection of content and submission of feedback. Default mode.
 
-### 3.2 Review Mode (Feedback Review and Resolution)
-- Allows importing one or more feedback CSVs
-- Supports **Document-wide review** and **Page-only view**
-- Displays and links feedback across multiple pages:
-  - Local page comments are highlighted and interactive
-  - Off-page comments are shown in the sidebar with page title + link
-- Enables filtering by reviewer, page, resolution status
-- Allows marking feedback as resolved / unresolved
-- Persists review status in local IndexedDB
-- Exports feedback including resolution state
+### Review Mode
+Designed for document authors. Loads and manages feedback provided via BackChannel CSV packages.
 
 ---
 
-## 4. Multi-Page Feedback Model
+## Features
 
-- A Feedback package includes:
-  - A **document name** (default from `<title>` of the root page)
-  - A **URL prefix** (default from folder path of root page)
-  - A local IndexedDB instance containing a `comments` table
-- Each comment entry includes:
-  - Page URL
-  - Page title
-  - Document name
-  - Page label (optional override)
-  - Label for target element
-  - Text, timestamp, initials, resolved status
+### Feedback Package Creation
 
----
+- Initiated from the welcome or home page of the document
+- Captures:
+  - Document Name (default from `<title>`)
+  - Author Name
+  - Date
+  - Document Path (stemmed URL path)
 
-## 5. Non-Goals / Constraints
+### Comment Capture Flow
 
-- No live collaboration
-- No server storage or sync
-- No user authentication
-- No required modification to original HTML content
+- `BC` icon shows grey by default
+- On hover: tooltip guides user
+- Click opens onboarding presentation (new window)
+- If feedback package exists:
+  - Icon is blue
+  - Clicking it opens sidebar
+  - Shows “Capture feedback” and “Export” buttons
+- In Capture mode:
+  - Sidebar is hidden
+  - Content is highlighted on hover
+  - On click/drag: feedback form opens
+  - Submit stores comment
+  - Cancel or `Esc` exits mode
+  - “Cancel capture” button is shown floating top-right
 
----
+### Sidebar
 
-## 6. Target Users
+- Toggle visibility via BC icon
+- Displays:
+  - List of feedback
+  - “Capture Feedback” button
+  - “Export” button
+- In Review mode:
+  - Allows resolution/status change
+  - Comments from other pages link via anchor
+  - Sidebar persists filters across pages
 
-- End users reviewing HTML documents in secure/offline contexts (Capture Mode)
-- Document authors or editors reviewing submitted feedback (Review Mode)
-- Teams working on training material, documentation, or static knowledge bases
+### Feedback Persistence
 
----
+- Feedback stored in IndexedDB
+- Each document set has its own database
+- Database identified via URL root and name
+- Current page's database cached in `localStorage` for performance
 
-## 7. Technical Requirements
+### Feedback Export
 
-- JavaScript plugin (UMD-style, script tag usage)
-- Self-contained with no required dependencies
-- Compatible with legacy HTML documents
-- Fully functional offline, including multi-page persistence
-- Modern browser support (Chrome, Edge, Firefox)
+- CSV format
+- Human-readable
+- Designed for manual transfer
+- No online dependencies
 
----
+### Feedback Import (Review Mode)
 
-## 8. Success Metrics
-
-- Multi-page feedback supported across 5+ pages with full traceability
-- Sidebar performance acceptable with 100+ comments
-- CSV export/import round-trip preserves all metadata
-- Easily adoptable by teams working with static HTML
-
----
-
-## 9. CSV Schema
-
-| Field       | Description                            |
-|-------------|----------------------------------------|
-| Document    | Document name from feedback package     |
-| Page URL    | Full page URL                          |
-| Page Title  | Title tag or override                  |
-| Page Label  | Optional user-defined label            |
-| Element     | Label/selector of commented element    |
-| Text        | Comment content                        |
-| Timestamp   | ISO datetime of entry                  |
-| Initials    | Reviewer ID (if required)              |
-| Resolved    | true/false (for review state)          |
+- CSV loaded via file selector
+- Comments matched by path + anchor
+- Sidebar shows list of comments
+- Clicking comment navigates to anchor
+- If anchor not yet present, is injected at runtime
 
 ---
 
-## 10. Future Enhancements (Optional)
+## Planned Enhancements
 
-- Merge feedback from multiple reviewers in the same view
-- Allow assigning comments to sections or categories
-- Import/export full feedback package as JSON bundle
-- Synchronize review state across machines (manual or networked)
+- Drag-to-reorder comments
+- Smart filters (resolved, page, author)
+- Comment tagging
+- Visual markers on links to other pages with comments
+- Role-specific slide-based onboarding
+- Local image caching for fully offline exports
 
 ---
 
-## 11. Summary
+## Mode Transition Flow (Mermaid)
 
-BackChannel is designed for structured, document-wide feedback on static web content. It supports both feedback entry and review workflows across multiple pages — without requiring connectivity, build systems, or page modification. By using a lightweight local database and CSV-based exchange, it enables frictionless offline review for the disconnected web.
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Onboarding : User clicks BC icon (grey)
+  Onboarding --> CaptureInit : User completes setup
+  CaptureInit --> CaptureActive : DB created, icon blue
+  CaptureActive --> CaptureSelecting : User clicks 'Capture Feedback'
+  CaptureSelecting --> CaptureActive : User submits/cancels
+  CaptureActive --> Export : User clicks 'Export'
+  Idle --> ReviewInit : User switches to review mode
+  ReviewInit --> ReviewActive : CSV loaded
+  ReviewActive --> Idle : Review complete
+```
+
+---
+
+## Architecture Notes
+
+- Plugin is pure JS, deployed as single file
+- No server dependencies
+- Loads on `window.onload`
+- Registers itself via script tag
+- IndexedDB per document set
+- Uses `localStorage` for performance cache
+
+---
+
+## UI States Summary
+
+- **BC Icon Disabled (grey)**: no feedback package active
+- **BC Icon Enabled (blue)**: feedback DB active for current page
+- **Sidebar Visible**: comment list, buttons
+- **Capture Mode Active**: sidebar hidden, floating Cancel button
+- **Export Mode**: sidebar shows CSV generation
+- **Review Mode**: shows all comments, resolve controls
