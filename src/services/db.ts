@@ -371,6 +371,7 @@ class DatabaseService {
 
     // Get all BackChannel databases
     const allDatabases = await DatabaseService.getAllBackChannelDatabases()
+    console.log('all databases', allDatabases)
 
     if (allDatabases.length === 0) {
       return []

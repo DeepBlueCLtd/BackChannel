@@ -27,6 +27,19 @@ export class BackChannelSidebar extends LitElement {
     }
   }
 
+  /**
+   * Lifecycle callback when properties change
+   */
+  updated(changedProperties: Map<string, any>) {
+    if (changedProperties.has('visible')) {
+      if (this.visible) {
+        this._showElementDecorations()
+      } else {
+        this._hideElementDecorations()
+      }
+    }
+  }
+
   // TypeScript declarations for properties
   declare visible: boolean
   declare captureMode: boolean
@@ -96,6 +109,100 @@ export class BackChannelSidebar extends LitElement {
   }
 
   /**
+   * Show decorations on elements that have comments
+   */
+  private _showElementDecorations() {
+    if (!this.comments || this.comments.length === 0) return
+
+    // Remove any existing decorations first
+    this._hideElementDecorations()
+
+    // Add decoration to each element with a comment
+    this.comments.forEach(comment => {
+      try {
+        // Try to find the element using the stored XPath
+        const element = document.evaluate(
+          comment.xpath,
+          document,
+          null,
+          window.XPathResult.FIRST_ORDERED_NODE_TYPE,
+          null
+        ).singleNodeValue as HTMLElement
+
+        if (element) {
+          // Add decoration class
+          element.classList.add('bc-has-comment')
+
+          // Add data attribute with comment text for tooltip
+          element.dataset.bcComment = comment.feedback
+
+          // Add event listeners for hover
+          element.addEventListener('mouseenter', this._showCommentTooltip.bind(this))
+          element.addEventListener('mouseleave', this._hideCommentTooltip.bind(this))
+        }
+      } catch (error) {
+        console.error('Error finding element for comment:', error)
+      }
+    })
+  }
+
+  /**
+   * Hide all element decorations
+   */
+  private _hideElementDecorations() {
+    // Find all elements with our decoration class
+    const decoratedElements = document.querySelectorAll('.bc-has-comment')
+
+    // Remove decoration and event listeners
+    decoratedElements.forEach(element => {
+      const htmlElement = element as HTMLElement
+      htmlElement.classList.remove('bc-has-comment')
+      delete htmlElement.dataset.bcComment
+      htmlElement.removeEventListener('mouseenter', this._showCommentTooltip.bind(this))
+      htmlElement.removeEventListener('mouseleave', this._hideCommentTooltip.bind(this))
+    })
+
+    // Remove any tooltips that might be visible
+    const tooltips = document.querySelectorAll('.bc-comment-tooltip')
+    tooltips.forEach(tooltip => {
+      ;(tooltip as HTMLElement).remove()
+    })
+  }
+
+  /**
+   * Show tooltip with comment text on hover
+   */
+  private _showCommentTooltip(event: Event) {
+    const element = event.currentTarget as HTMLElement
+    const commentText = element.dataset.bcComment
+
+    if (!commentText) return
+
+    // Create tooltip element
+    const tooltip = document.createElement('div')
+    tooltip.className = 'bc-comment-tooltip'
+    tooltip.textContent = commentText
+
+    // Position tooltip near the element
+    const rect = element.getBoundingClientRect()
+    tooltip.style.top = `${rect.bottom + 5}px`
+    tooltip.style.left = `${rect.left}px`
+
+    // Add tooltip to the document
+    document.body.appendChild(tooltip)
+  }
+
+  /**
+   * Hide comment tooltip
+   */
+  private _hideCommentTooltip() {
+    const tooltips = document.querySelectorAll('.bc-comment-tooltip')
+    tooltips.forEach(tooltip => {
+      ;(tooltip as HTMLElement).remove()
+    })
+  }
+
+  /**
    * CSS styles for the component
    */
   static styles = css`
@@ -111,6 +218,23 @@ export class BackChannelSidebar extends LitElement {
       transition: right 0.3s ease;
       z-index: 9998;
       overflow-y: auto;
+    }
+
+    /* Global styles for comment decorations and tooltips */
+    :host::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* These styles will be injected into the document when the sidebar is visible */
+    :host([visible])::after {
+      content: '.bc-has-comment { outline: 2px solid #4285f4; position: relative; } .bc-comment-tooltip { position: absolute; background: #333; color: white; padding: 8px 12px; border-radius: 4px; font-size: 14px; max-width: 250px; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }';
     }
 
     :host([visible]) {
