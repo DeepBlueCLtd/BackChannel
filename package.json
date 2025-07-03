@@ -16,6 +16,7 @@
     "test:all": "yarn build-plugin && yarn test && yarn test:e2e"
   },
   "devDependencies": {
+    "@lit/context": "^1.1.5",
     "@playwright/test": "^1.53.1",
     "@types/node": "^24.0.7",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
