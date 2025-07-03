@@ -72,7 +72,7 @@ export const fakeData: FakeDbJson[] = [
       },
       {
         name: 'comments',
-        keyPath: 'id',
+        keyPath: 'timestamp',
         data: [
           {
             feedback: 'This is a test comment for the enabled fixture',
