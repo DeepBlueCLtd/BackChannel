@@ -30,5 +30,8 @@
     "typescript": "~5.8.3",
     "vite": "^7.0.0",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "lit": "^3.3.0"
   }
 }
