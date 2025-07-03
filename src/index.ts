@@ -4,8 +4,8 @@
  */
 
 import { getActiveFeedbackPackage } from './services/packageService'
-import { createBadge } from './components/Badge/Badge'
-import type { BadgeOptions } from './components/Badge/Badge'
+import { createBadge } from './components/Badge'
+import type { BadgeOptions } from './components/Badge'
 
 // Store references to UI elements
 let bcBadgeElement: HTMLElement | null = null
@@ -32,7 +32,7 @@ const showBackChannelBadge = (isEnabled: boolean): void => {
   // Create badge options
   const badgeOptions: BadgeOptions = {
     enabled: isEnabled,
-    position: 'bottom-right',
+    position: 'top-right',
     onClick: () => handleBadgeClick(isEnabled),
   }
 
