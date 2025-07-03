@@ -386,17 +386,27 @@ class DatabaseService {
       const dbId = dbName.replace('bc-storage-', '')
 
       // Create a database service for this database
+      console.log('about to load database', dbId)
       const dbService = new DatabaseService(dbId)
       await dbService.init()
 
       try {
         // Get the package from this database
+        console.log('about to get package', dbService)
         const packageData = await dbService.getPackage()
+        console.log('got package', packageData)
 
         // Check if the URL starts with the package's rootURL (proper subpath matching)
         // Also handle protocol differences by normalizing URLs
         const normalizedRootUrl = DatabaseService._normalizeUrl(packageData?.rootURL || '')
-        console.log('checking databases', urlPattern, normalizedUrlPattern, normalizedRootUrl)
+        console.log(
+          'checking databases',
+          dbService,
+          packageData,
+          urlPattern,
+          normalizedUrlPattern,
+          normalizedRootUrl
+        )
         if (
           packageData &&
           packageData.rootURL &&
