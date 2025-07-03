@@ -64,7 +64,7 @@ export const fakeData: FakeDbJson[] = [
           {
             id: 'pkg-1234567890',
             name: 'Enabled Test Package',
-            rootURL: 'http://localhost:8080/tests/e2e/fixtures/enabled-test/enabled/',
+            rootURL: 'http://localhost:5173/tests/e2e/fixtures/enabled-test/enabled',
             version: '1.0.0',
             author: 'Test Author 1',
           },
