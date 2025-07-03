@@ -11,6 +11,7 @@
 type IDBDatabase = any
 type IDBRequest = any
 type IDBVersionChangeEvent = any
+type IDBFactory = any
 
 import type { Package, Comment, DatabaseMatch, ActiveFeedbackPackage } from '../types'
 
@@ -19,12 +20,86 @@ interface Event {
   target: IDBRequest
 }
 
+// Interface for database info returned by IndexedDB.databases()
+interface IDBDatabaseInfo {
+  name?: string
+  version?: number
+}
+
 class DatabaseService {
+  // Static array to store fake databases for testing
+  private static fakeDatabases: Map<string, IDBDatabase> = new Map()
   private dbName: string
   private dbVersion: number
   private db: IDBDatabase | null
   private isSupported: boolean
   private initialPackageData: Package | null
+  private idb: IDBFactory
+
+  /**
+   * Static method to use fake databases for testing
+   * This method is used to inject fake databases for testing purposes
+   * @param dbs - Array of fake database objects to use for testing
+   */
+  static useFakeDatabases(dbs: IDBDatabase[] = []): void {
+    this.fakeDatabases.clear()
+    dbs.forEach(db => {
+      if (db && db.name) {
+        this.fakeDatabases.set(db.name, db)
+      }
+    })
+  }
+
+  /**
+   * Static method to clear fake databases
+   * This method is used to clear all fake databases
+   */
+  static clearFakeDatabases(): void {
+    this.fakeDatabases.clear()
+  }
+
+  /**
+   * Static method to get all databases
+   * This method returns fake databases if they exist, otherwise it returns real databases
+   * @returns Promise resolving to an array of database info objects
+   */
+  static async databases(): Promise<IDBDatabaseInfo[]> {
+    if (this.fakeDatabases.size > 0) {
+      // Return fake databases as IDBDatabaseInfo objects
+      return Array.from(this.fakeDatabases.keys()).map(name => ({ name }))
+    }
+    // Return real databases
+    return (await window.indexedDB.databases?.()) || []
+  }
+
+  /**
+   * Static method to open a database
+   * This method returns a fake database if it exists, otherwise it opens a real database
+   * @param name - Database name to open
+   * @returns Promise resolving to an IDBDatabase object
+   */
+  static async open(name: string): Promise<IDBDatabase> {
+    if (this.fakeDatabases.size > 0) {
+      const db = this.fakeDatabases.get(name)
+      if (!db) throw new Error(`Fake DB '${name}' not found`)
+      return db
+    }
+    // Open real database
+    return new Promise<IDBDatabase>((resolve, reject) => {
+      const request = window.indexedDB.open(name)
+      request.onsuccess = (event: any) => resolve(event.target.result)
+      request.onerror = (event: any) => reject(event.target.error)
+    })
+  }
+
+  /**
+   * Static method to get a fake database by name
+   * @param name - Database name
+   * @returns Fake database or undefined if not found
+   */
+  static getFakeDatabase(name: string): IDBDatabase | undefined {
+    return this.fakeDatabases.get(name)
+  }
 
   /**
    * Constructor for DatabaseService
@@ -37,6 +112,15 @@ class DatabaseService {
     this.dbName = `bc-storage-${this._sanitizeDbName(dbId)}`
     this.dbVersion = 1
     this.db = null
+
+    // Check if we should use a fake database from the static array
+    const fakeDb = DatabaseService.fakeDatabases.get(this.dbName)
+    if (fakeDb) {
+      // If a fake database with this name exists, use it
+      this.db = fakeDb
+    }
+    // Use the browser's IndexedDB
+    this.idb = typeof window !== 'undefined' ? window.indexedDB : undefined
     this.isSupported = this._checkSupport()
 
     // If packageData is provided, ensure it has an ID
@@ -87,15 +171,6 @@ class DatabaseService {
   }
 
   /**
-   * Checks if IndexedDB is supported in the current browser
-   * @returns Whether IndexedDB is supported
-   * @private
-   */
-  private _checkSupport(): boolean {
-    return DatabaseService.isSupported()
-  }
-
-  /**
    * Static method to check if IndexedDB is supported in the current browser
    * @returns Whether IndexedDB is supported
    */
@@ -106,17 +181,34 @@ class DatabaseService {
   }
 
   /**
+   * Instance method to check if IndexedDB is supported
+   * @returns Whether IndexedDB is supported
+   * @private
+   */
+  private _checkSupport(): boolean {
+    return this.idb !== undefined && this.idb !== null
+  }
+
+  /**
    * Static method to get all BackChannel databases
    * @returns Array of BackChannel database names
    */
   static async getAllBackChannelDatabases(): Promise<string[]> {
-    if (!DatabaseService.isSupported()) {
+    if (!DatabaseService.isSupported() && DatabaseService.fakeDatabases.size === 0) {
       throw new Error('IndexedDB is not supported in this browser')
     }
 
     try {
-      // Get all available databases
-      const databases = await window.indexedDB.databases()
+      let databases: IDBDatabaseInfo[] = []
+
+      // Check fake databases first
+      if (DatabaseService.fakeDatabases.size > 0) {
+        databases = Array.from(DatabaseService.fakeDatabases.keys()).map(name => ({ name }))
+      } else {
+        // Fall back to real IndexedDB
+        databases = await window.indexedDB.databases()
+      }
+
       // Filter to only include BackChannel databases and return their names
       return databases
         .filter(db => db.name && db.name.startsWith('bc-storage-'))
@@ -133,13 +225,20 @@ class DatabaseService {
    * @returns Whether the database exists
    */
   static async databaseExists(dbId: string): Promise<boolean> {
-    if (!DatabaseService.isSupported()) {
+    if (!DatabaseService.isSupported() && DatabaseService.fakeDatabases.size === 0) {
       throw new Error('IndexedDB is not supported in this browser')
     }
 
     try {
-      const databases = await window.indexedDB.databases()
       const dbName = `bc-storage-${dbId}`
+
+      // Check fake databases first
+      if (DatabaseService.fakeDatabases.size > 0) {
+        return DatabaseService.fakeDatabases.has(dbName)
+      }
+
+      // Fall back to real IndexedDB
+      const databases = await window.indexedDB.databases()
       return databases.some(db => db.name === dbName)
     } catch (error) {
       console.error('Error checking database existence:', error)
@@ -173,7 +272,7 @@ class DatabaseService {
       return null
     }
 
-    if (!DatabaseService.isSupported()) {
+    if (!DatabaseService.isSupported() && DatabaseService.fakeDatabases.size === 0) {
       console.error('IndexedDB is not supported in this browser')
       return null
     }
@@ -254,7 +353,7 @@ class DatabaseService {
       throw new Error('URL pattern is required')
     }
 
-    if (!DatabaseService.isSupported()) {
+    if (!DatabaseService.isSupported() && DatabaseService.fakeDatabases.size === 0) {
       throw new Error('IndexedDB is not supported in this browser')
     }
 
@@ -321,7 +420,7 @@ class DatabaseService {
 
     try {
       const initResult = await new Promise<boolean>(resolve => {
-        const request = window.indexedDB.open(this.dbName, this.dbVersion)
+        const request = this.idb.open(this.dbName, this.dbVersion)
 
         request.onerror = (event: Event) => {
           console.error('Error opening IndexedDB:', (event.target as IDBRequest).error)
