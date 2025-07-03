@@ -34,7 +34,7 @@ And the comment appears in the sidebar
 
 ### Scenario: Add feedback to another page in the same package
 Given a feedback package has already been created  
-And the user navigates to another page whose URL starts with the same prefix  
+And the user navigates to another page whose URL contains the URL snippet 
 When the user adds a comment  
 Then the comment is added to the same feedback package in IndexedDB
 

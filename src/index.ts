@@ -9,7 +9,6 @@
 
 /* global CustomEvent, Event */
 
-import { getActiveFeedbackPackage } from './services/packageService'
 import './components/Badge'
 import './components/Sidebar'
 import './components/PackageDialog'
@@ -27,6 +26,7 @@ declare global {
 }
 import { loadFakeDatabasesFromJson, type FakeDbJson } from './helpers/fakeDb'
 import { DatabaseService } from './services/db'
+import type { ActiveFeedbackPackage } from './types'
 
 // Wait for the DOM to be fully loaded before initializing
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,9 +40,28 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initBackChannel(): Promise<void> {
   console.log('Initializing BackChannel')
 
+  // Check for fake database definitions and load them if available
+  if (typeof window !== 'undefined' && (window as any).fakeData) {
+    const fakeData = (window as any).fakeData as FakeDbJson[]
+    console.log('Fake database definitions detected:', fakeData)
+
+    // Load fake databases from JSON definitions
+    loadFakeDatabasesFromJson(fakeData)
+      .then((fakeDatabases: any[]) => {
+        console.log('Fake databases loaded:', fakeDatabases)
+        // Initialize DatabaseService with fake databases
+        DatabaseService.useFakeDatabases(fakeDatabases)
+      })
+      .catch((error: any) => {
+        console.error('Error loading fake databases:', error)
+      })
+  }
+
   try {
     // Check if there is an active feedback package for the current URL
-    const activeFeedbackPackage = await getActiveFeedbackPackage(window.location.href)
+    console.log('checking for active feedback package', window.location.href)
+    const activeFeedbackPackage: ActiveFeedbackPackage | null =
+      await DatabaseService.getActiveFeedbackPackageForUrl(window.location.href)
 
     // Show the badge with appropriate state
     showBackChannelBadge(activeFeedbackPackage !== null)
@@ -52,7 +71,7 @@ async function initBackChannel(): Promise<void> {
 
     console.log('BackChannel initialized successfully')
     if (activeFeedbackPackage) {
-      console.log('Active feedback package found:', activeFeedbackPackage.name)
+      console.log('Active feedback package found:', activeFeedbackPackage.packageData)
     } else {
       console.log('No active feedback package found for this URL')
     }
@@ -157,22 +176,4 @@ function setupComponentEventListeners(): void {
       // Open sidebar
     }
   )
-
-  // Check for fake database definitions and load them if available
-  console.log('checking for fake data', typeof window !== 'undefined', (window as any).fakeData)
-  if (typeof window !== 'undefined' && (window as any).fakeData) {
-    const fakeData = (window as any).fakeData as FakeDbJson[]
-    console.log('Fake database definitions detected:', fakeData)
-
-    // Load fake databases from JSON definitions
-    loadFakeDatabasesFromJson(fakeData)
-      .then((fakeDatabases: any[]) => {
-        console.log('Fake databases loaded:', fakeDatabases)
-        // Initialize DatabaseService with fake databases
-        DatabaseService.useFakeDatabases(fakeDatabases)
-      })
-      .catch((error: any) => {
-        console.error('Error loading fake databases:', error)
-      })
-  }
 }

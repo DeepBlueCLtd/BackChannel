@@ -290,11 +290,23 @@ class DatabaseService {
       const normalizedCurrentUrl = DatabaseService._normalizeUrl(currentUrl)
       const normalizedCachedRootUrl = DatabaseService._normalizeUrl(cachedRootUrl || '')
 
+      console.log(
+        'checking cached URL',
+        currentUrl,
+        cachedRootUrl,
+        normalizedCurrentUrl,
+        normalizedCachedRootUrl,
+        cachedRootUrl &&
+          cachedPackage &&
+          (currentUrl.includes(cachedRootUrl) ||
+            normalizedCurrentUrl.includes(normalizedCachedRootUrl))
+      )
+
       if (
         cachedRootUrl &&
         cachedPackage &&
-        (currentUrl.startsWith(cachedRootUrl) ||
-          normalizedCurrentUrl.startsWith(normalizedCachedRootUrl))
+        (currentUrl.includes(cachedRootUrl) ||
+          normalizedCurrentUrl.includes(normalizedCachedRootUrl))
       ) {
         try {
           const packageData = JSON.parse(cachedPackage) as Package & { dbId?: string }
@@ -383,12 +395,12 @@ class DatabaseService {
         // Check if the URL starts with the package's rootURL (proper subpath matching)
         // Also handle protocol differences by normalizing URLs
         const normalizedRootUrl = DatabaseService._normalizeUrl(packageData?.rootURL || '')
-
+        console.log('checking databases', urlPattern, normalizedUrlPattern, normalizedRootUrl)
         if (
           packageData &&
           packageData.rootURL &&
-          (urlPattern.startsWith(packageData.rootURL) ||
-            normalizedUrlPattern.startsWith(normalizedRootUrl))
+          (urlPattern.includes(packageData.rootURL) ||
+            normalizedUrlPattern.includes(normalizedRootUrl))
         ) {
           matchingPackages.push({
             dbId,
@@ -416,6 +428,13 @@ class DatabaseService {
     if (!this.isSupported) {
       console.error('IndexedDB is not supported in this browser')
       return false
+    }
+
+    // Check if a fake database exists for this dbName first
+    if (DatabaseService.fakeDatabases.has(this.dbName)) {
+      console.log(`Using fake database for ${this.dbName}`)
+      this.db = DatabaseService.fakeDatabases.get(this.dbName) || null
+      return true
     }
 
     try {
