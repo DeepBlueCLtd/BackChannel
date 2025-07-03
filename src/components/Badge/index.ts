@@ -53,6 +53,11 @@ export class BackChannelBadge extends LitElement {
       height: 60px;
       background-color: #888;
       border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    :host([enabled]) {
+      background-color: #0066cc;
     }
 
     div {
