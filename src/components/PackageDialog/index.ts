@@ -64,6 +64,7 @@ export class BackChannelPackageDialog extends LitElement {
   private _handleTitleInput(e: Event) {
     const target = e.target as HTMLInputElement
     this._title = target.value
+    this.requestUpdate()
   }
 
   /**
@@ -72,6 +73,7 @@ export class BackChannelPackageDialog extends LitElement {
   private _handleAuthorInput(e: Event) {
     const target = e.target as HTMLInputElement
     this._author = target.value
+    this.requestUpdate()
   }
 
   /**
@@ -80,6 +82,7 @@ export class BackChannelPackageDialog extends LitElement {
   private _handleUrlPrefixInput(e: Event) {
     const target = e.target as HTMLInputElement
     this._urlPrefix = target.value
+    this.requestUpdate()
   }
 
   /**
