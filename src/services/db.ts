@@ -75,9 +75,8 @@ class DatabaseService {
    * Constructor for DatabaseService
    * @param documentTitle - Title of the document for database naming
    * @param packageData - Optional package data to initialize with
-   * @param idb - Optional IndexedDB factory (e.g., fake-indexeddb for testing)
    */
-  constructor(documentTitle?: string, packageData: Package | null = null, idb?: IDBFactory) {
+  constructor(documentTitle?: string, packageData: Package | null = null) {
     // Generate a database ID using the last 6 digits of the timestamp if not provided
     const dbId = documentTitle || this._generateDatabaseId()
     this.dbName = `bc-storage-${this._sanitizeDbName(dbId)}`
@@ -90,8 +89,8 @@ class DatabaseService {
       // If a fake database with this name exists, use it
       this.db = fakeDb
     }
-    // Use the provided IDBFactory or the browser's IndexedDB
-    this.idb = idb || (typeof window !== 'undefined' ? window.indexedDB : undefined)
+    // Use the browser's IndexedDB
+    this.idb = typeof window !== 'undefined' ? window.indexedDB : undefined
     this.isSupported = this._checkSupport()
 
     // If packageData is provided, ensure it has an ID
