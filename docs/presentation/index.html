@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>BackChannel Stakeholder Briefing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/theme/sky.css" />
+    <style>
+      .reveal h2, .reveal h3 {
+        margin-bottom: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h2>Welcome to BackChannel</h2>
+          <p>BackChannel is a lightweight feedback tool for reviewing static web content in offline or secure environments.</p>
+          <h5>Ian Mayo, Deep Blue C Ltd</h5>
+        </section>
+        <section>
+          <h2>Who It's For</h2>
+          <ul>
+            <li>Document authors and reviewers</li>
+            <li>Analysts working in secure or disconnected networks</li>
+            <li>Teams distributing HTML-based technical manuals</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Why Now?</h2>
+          <p>Legacy documentation is moving to HTML. But feedback workflows haven't caught up — especially for disconnected teams.</p>
+        </section>
+        <section>
+          <h2>Core Use Case: Feedback on the Disconnected Web</h2>
+          <p>BackChannel enables structured, contextual feedback — with no server, and no dependencies beyond the browser.</p>
+        </section>
+
+        <section>
+          <h2>Feedback Capture Mode</h2>
+          <p>Click the BackChannel icon to highlight and comment on elements in the page.</p>
+        </section>
+        <section>
+          <h2>Review Mode</h2>
+          <p>Document authors can open feedback files and resolve comments across all pages.</p>
+        </section>
+        <section>
+          <h2>Multi-Page Document Support</h2>
+          <p>Feedback is collected across a document set, with easy navigation between pages.</p>
+        </section>
+        <section>
+          <h2>Workflow Overview</h2>
+          <ol>
+            <li>User starts feedback package on intro page</li>
+            <li>Feedback is added across pages</li>
+            <li>CSV is exported and shared</li>
+            <li>Author loads and resolves comments</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>Business Objectives</h2>
+          <ul>
+            <li>Enable secure, air-gapped feedback loops</li>
+            <li>Support static HTML publications</li>
+            <li>Zero-install for end users</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Zero-Network Dependency</h2>
+          <p>Works entirely in the browser. Uses IndexedDB for local persistence. Nothing sent over the network.</p>
+        </section>
+        <section>
+          <h2>Layered on Legacy Content</h2>
+          <p>BackChannel works with unmodified legacy HTML — no classes, no hooks required.</p>
+        </section>
+
+        <section>
+          <h2>Security: Privacy by Design</h2>
+          <ul>
+            <li>All data is stored locally</li>
+            <li>No network communication at any stage</li>
+            <li>Only user-visible content is stored</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Security: Content Safety</h2>
+          <p>Feedback is stored separately, and displayed safely via DOM sanitation techniques.</p>
+        </section>
+
+        <section>
+          <h2>Planned Enhancements</h2>
+          <ul>
+            <li>Advanced filtering and sorting of comments</li>
+            <li>Visual overview of feedback locations</li>
+            <li>Author-side tools for CSV export and summary</li>
+            <li>Custom branding</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Path to Broader Adoption</h2>
+          <ul>
+            <li>Single-file JS loader for drop-in use</li>
+            <li>Growing interest in static, interactive documents</li>
+            <li>Opportunity to extend into form-based inputs</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Opportunities for Collaboration</h2>
+          <p>We're looking for partners to pilot, fund, and extend BackChannel. Let’s explore the potential together.</p>
+        </section>
+        <section>
+          <h2>Next Steps</h2>
+          <ul>
+            <li>Visit the GitHub repo</li>
+            <li>Try the demo</li>
+            <li>Contact us for a walkthrough</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/reveal.js"></script>
+    <script>
+      Reveal.initialize();
+    </script>
+  </body>
+</html>
