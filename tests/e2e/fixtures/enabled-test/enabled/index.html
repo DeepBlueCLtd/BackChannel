@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BackChannel Enabled Test - Enabled Root</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .navigation {
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+    }
+    .navigation a {
+      margin-right: 15px;
+      color: #0066cc;
+      text-decoration: none;
+    }
+    .navigation a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>BackChannel Enabled Test - Enabled Root</h1>
+  
+  <div class="navigation">
+    <a href="../index.html">Main Root</a>
+    <a href="subdir/index.html">Enabled Subdirectory</a>
+    <a href="../disabled/index.html">Disabled Section</a>
+  </div>
+  
+  <p>This is the root page of the "enabled" section.</p>
+  <p>The test will create a feedback package at this location, which should make all pages under this path enabled for BackChannel.</p>
+  
+  <script>
+    // This script is just a placeholder for the test to verify page loading
+    console.log('Enabled root page loaded');
+  </script>
+</body>
+</html>
