@@ -6,24 +6,23 @@
  * Package data interface
  */
 export interface Package {
-  id?: string
-  name: string
-  version: string
-  author: string
-  description: string
-  rootURL?: string
+  id?: string // treated as unique id of package
+  name: string // name of document receiving feedback
+  version: string // version of BackChannel library
+  author: string // author of feedback
+  rootURL?: string // root url of package receiving feedback
 }
 
 /**
  * Comment data interface
  */
 export interface Comment {
-  timestamp: number
-  xpath: string
-  elementText: string
-  feedback: string
-  pageUrl: string
-  documentTitle: string
+  timestamp: number // treated as unique id of comment
+  xpath: string // the xpath of the element
+  elementText: string // the first few characters of the element text
+  feedback: string // the line of feedback. Plain text.
+  pageUrl: string // url of document, relative to document rootURL
+  documentTitle: string // human-readable version of document title, to help with review/management
 }
 
 /**

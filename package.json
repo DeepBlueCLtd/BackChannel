@@ -24,6 +24,7 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-react": "^7.37.5",
+    "fake-indexeddb": "^6.0.1",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
     "serve-handler": "^6.1.6",

@@ -11,6 +11,7 @@
 type IDBDatabase = any
 type IDBRequest = any
 type IDBVersionChangeEvent = any
+type IDBFactory = any
 
 import type { Package, Comment, DatabaseMatch, ActiveFeedbackPackage } from '../types'
 
@@ -25,18 +26,21 @@ class DatabaseService {
   private db: IDBDatabase | null
   private isSupported: boolean
   private initialPackageData: Package | null
+  private idb: IDBFactory
 
   /**
    * Constructor for DatabaseService
    * @param documentTitle - Title of the document for database naming
    * @param packageData - Optional package data to initialize with
+   * @param idb - Optional IndexedDB factory (e.g., fake-indexeddb for testing)
    */
-  constructor(documentTitle?: string, packageData: Package | null = null) {
+  constructor(documentTitle?: string, packageData: Package | null = null, idb?: IDBFactory) {
     // Generate a database ID using the last 6 digits of the timestamp if not provided
     const dbId = documentTitle || this._generateDatabaseId()
     this.dbName = `bc-storage-${this._sanitizeDbName(dbId)}`
     this.dbVersion = 1
     this.db = null
+    this.idb = idb || (typeof window !== 'undefined' ? window.indexedDB : undefined)
     this.isSupported = this._checkSupport()
 
     // If packageData is provided, ensure it has an ID
@@ -87,15 +91,6 @@ class DatabaseService {
   }
 
   /**
-   * Checks if IndexedDB is supported in the current browser
-   * @returns Whether IndexedDB is supported
-   * @private
-   */
-  private _checkSupport(): boolean {
-    return DatabaseService.isSupported()
-  }
-
-  /**
    * Static method to check if IndexedDB is supported in the current browser
    * @returns Whether IndexedDB is supported
    */
@@ -103,6 +98,15 @@ class DatabaseService {
     return (
       typeof window !== 'undefined' && window.indexedDB !== undefined && window.indexedDB !== null
     )
+  }
+
+  /**
+   * Instance method to check if IndexedDB is supported
+   * @returns Whether IndexedDB is supported
+   * @private
+   */
+  private _checkSupport(): boolean {
+    return this.idb !== undefined && this.idb !== null
   }
 
   /**
@@ -321,7 +325,7 @@ class DatabaseService {
 
     try {
       const initResult = await new Promise<boolean>(resolve => {
-        const request = window.indexedDB.open(this.dbName, this.dbVersion)
+        const request = this.idb.open(this.dbName, this.dbVersion)
 
         request.onerror = (event: Event) => {
           console.error('Error opening IndexedDB:', (event.target as IDBRequest).error)
