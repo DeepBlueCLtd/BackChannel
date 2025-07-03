@@ -30,7 +30,6 @@ export interface Comment {
 export interface FakedbPackageStore {
   name: string
   keyPath: string
-  // eslint-disable-next-line no-undef
   data: Package[]
 }
 
