@@ -24,7 +24,7 @@ const handleBadgeClick = (isEnabled: boolean) => {
 
     // Mock: Toggle badge from disabled to enabled when clicked
     if (bcBadgeElement) {
-      // Remove the current badge
+      // Remove the current badge from DOM
       bcBadgeElement.remove()
 
       // Show the badge in enabled state
