@@ -1,4 +1,8 @@
 /**
+ * Type definitions for BackChannel
+ */
+
+/**
  * Package data interface
  */
 export interface Package {
@@ -34,7 +38,7 @@ export interface DatabaseMatch {
 /**
  * Active feedback package result interface
  */
-interface ActiveFeedbackPackage {
+export interface ActiveFeedbackPackage {
   dbId: string
   packageData: Package
 }
