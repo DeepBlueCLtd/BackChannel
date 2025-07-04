@@ -45,6 +45,11 @@ export class BackChannelSidebar extends LitElement {
   declare captureMode: boolean
   declare comments: any[]
 
+  constructor() {
+    super()
+    this.comments = []
+  }
+
   // Private state
   private _currentFeedback = ''
 
