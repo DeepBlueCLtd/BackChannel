@@ -121,6 +121,31 @@ export class BackChannelSidebar extends LitElement {
 
     // Remove any existing decorations first
     this._hideElementDecorations()
+    
+    // Add CSS styles for comment decorations
+    const styleId = 'bc-comment-styles'
+    if (!document.getElementById(styleId)) {
+      const styleEl = document.createElement('style')
+      styleEl.id = styleId
+      styleEl.textContent = `
+        .bc-has-comment { 
+          outline: 2px solid #4285f4; 
+          position: relative; 
+        } 
+        .bc-comment-tooltip { 
+          position: absolute; 
+          background: #333; 
+          color: white; 
+          padding: 8px 12px; 
+          border-radius: 4px; 
+          font-size: 14px; 
+          max-width: 250px; 
+          z-index: 10000; 
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+        }
+      `
+      document.head.appendChild(styleEl)
+    }
 
     // Add decoration to each element with a comment
     this.comments.forEach(comment => {
@@ -225,22 +250,7 @@ export class BackChannelSidebar extends LitElement {
       overflow-y: auto;
     }
 
-    /* Global styles for comment decorations and tooltips */
-    :host::after {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    /* These styles will be injected into the document when the sidebar is visible */
-    :host([visible])::after {
-      content: '.bc-has-comment { outline: 2px solid #4285f4; position: relative; } .bc-comment-tooltip { position: absolute; background: #333; color: white; padding: 8px 12px; border-radius: 4px; font-size: 14px; max-width: 250px; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }';
-    }
+    /* No longer using ::after for CSS injection - using proper style element instead */
 
     :host([visible]) {
       right: 0;

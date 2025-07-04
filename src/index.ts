@@ -364,10 +364,14 @@ function setupComponentEventListeners(): void {
       
       // Update the sidebar with the comments
       const sidebar = document.querySelector('bc-sidebar') as HTMLElement & {
-        comments: any[]
+        comments: any[],
+        captureMode: boolean,
+        visible: boolean
       }
       
       if (sidebar) {
+        // Hide the feedback form after submission
+        sidebar.captureMode = false
         sidebar.comments = comments
         
         // Show decorations on elements with comments
