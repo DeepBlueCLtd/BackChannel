@@ -38,6 +38,13 @@ export class BackChannelSidebar extends LitElement {
         this._hideElementDecorations()
       }
     }
+    
+    // Also respond to changes in the comments array
+    if (changedProperties.has('comments')) {
+      if (this.visible && this.comments && this.comments.length > 0) {
+        this._showElementDecorations()
+      }
+    }
   }
 
   // TypeScript declarations for properties

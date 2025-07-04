@@ -26,14 +26,14 @@ This document breaks down the full implementation of BackChannel, covering both 
 - [ ] When capture sidebar is open, decorations on page show which elements have comment. Hovering over them shows the comment.
 
 ### Commenting
-- [ ] Capture sidebar still has BC icon at top, clicking on it collapses the sidebar.
-- [ ] Capture sidebar includes `Capture Feedback` and `Export` buttons
-- [ ] On clicking on `Capture Feedback`, UI goes into `Capture mode`. Sidebar is hidden, though floating `Cancel Capture` button remains.  Hovering over html elements highlights the element. Clicking on an element opens the sidebar, with a `capture feedback` form open at the top, to take a comment.
-- [ ] Add comment on DOM click (default fallback if no `.reviewable`)
-- [ ] Show comment UI with editable text.  Show this form in a compact way at the top of the BC sidebar
-- [ ] Save comment to `comments` table with metadata
-- [ ] Render comment badge on target element
-- [ ] List current page comments in sidebar
+- [x] Capture sidebar still has BC icon at top, clicking on it collapses the sidebar.
+- [x] Capture sidebar includes `Capture Feedback` and `Export` buttons
+- [x] On clicking on `Capture Feedback`, UI goes into `Capture mode`. Sidebar is hidden, though floating `Cancel Capture` button remains.  Hovering over html elements highlights the element. Clicking on an element opens the sidebar, with a `capture feedback` form open at the top, to take a comment.
+- [x] Add comment on DOM click (default fallback if no `.reviewable`)
+- [x] Show comment UI with editable text.  Show this form in a compact way at the top of the BC sidebar
+- [x] Save comment to `comments` table with metadata
+- [x] Render comment badge on target element
+- [x] List current page comments in sidebar
 
 ### Navigation
 - [ ] Detect feedback package match on hyperlinked documents, show decoration when comments availble for that document.

@@ -389,38 +389,37 @@ function setupComponentEventListeners(): void {
         sidebar.comments = comments
         
         // Show decorations on elements with comments
-        if (sidebar.visible) {
-          // Add a small delay to ensure the DOM is updated
-          setTimeout(() => {
-            // Find the element using the stored XPath
-            try {
-              const element = document.evaluate(
-                selectedElement.xpath,
-                document,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-              ).singleNodeValue as HTMLElement
+        // Always apply decoration to the current element, regardless of sidebar visibility
+        // Add a small delay to ensure the DOM is updated
+        setTimeout(() => {
+          // Find the element using the stored XPath
+          try {
+            const element = document.evaluate(
+              selectedElement.xpath,
+              document,
+              null,
+              XPathResult.FIRST_ORDERED_NODE_TYPE,
+              null
+            ).singleNodeValue as HTMLElement
+            
+            if (element) {
+              // Add decoration class
+              element.classList.add('bc-has-comment')
               
-              if (element) {
-                // Add decoration class
-                element.classList.add('bc-has-comment')
-                
-                // Add data attribute with comment text for tooltip
-                element.dataset.bcComment = event.detail.feedback
-                
-                // Add event listeners for tooltip functionality
-                const sidebar = document.querySelector('bc-sidebar') as any
-                if (sidebar && sidebar._showCommentTooltip && sidebar._hideCommentTooltip) {
-                  element.addEventListener('mouseenter', sidebar._showCommentTooltip.bind(sidebar))
-                  element.addEventListener('mouseleave', sidebar._hideCommentTooltip.bind(sidebar))
-                }
+              // Add data attribute with comment text for tooltip
+              element.dataset.bcComment = event.detail.feedback
+              
+              // Add event listeners for tooltip functionality
+              const sidebar = document.querySelector('bc-sidebar') as any
+              if (sidebar && sidebar._showCommentTooltip && sidebar._hideCommentTooltip) {
+                element.addEventListener('mouseenter', sidebar._showCommentTooltip.bind(sidebar))
+                element.addEventListener('mouseleave', sidebar._hideCommentTooltip.bind(sidebar))
               }
-            } catch (error) {
-              console.error('Error finding element for comment:', error)
             }
-          }, 100)
-        }
+          } catch (error) {
+            console.error('Error finding element for comment:', error)
+          }
+        }, 100)
       }
       
       // Clear the selected element
