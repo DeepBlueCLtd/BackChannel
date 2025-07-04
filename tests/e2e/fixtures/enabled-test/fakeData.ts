@@ -58,7 +58,7 @@ export const fakeData: FakeDbJson[] = [
     version: 1,
     objectStores: [
       {
-        name: 'package',
+        name: 'packages',
         keyPath: 'id',
         data: [
           {
