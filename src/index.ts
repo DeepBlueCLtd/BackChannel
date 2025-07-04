@@ -408,6 +408,13 @@ function setupComponentEventListeners(): void {
                 
                 // Add data attribute with comment text for tooltip
                 element.dataset.bcComment = event.detail.feedback
+                
+                // Add event listeners for tooltip functionality
+                const sidebar = document.querySelector('bc-sidebar') as any
+                if (sidebar && sidebar._showCommentTooltip && sidebar._hideCommentTooltip) {
+                  element.addEventListener('mouseenter', sidebar._showCommentTooltip.bind(sidebar))
+                  element.addEventListener('mouseleave', sidebar._hideCommentTooltip.bind(sidebar))
+                }
               }
             } catch (error) {
               console.error('Error finding element for comment:', error)

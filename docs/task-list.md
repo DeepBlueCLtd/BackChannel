@@ -6,23 +6,23 @@ This document breaks down the full implementation of BackChannel, covering both 
 
 ## ✅ Phase 1: Scaffolding and Infrastructure
 
-- [ ] Set up project with TypeScript + Vite + ESLint/Prettier
-- [ ] Create build process to produce a single-file JS plugin
-- [ ] Implement IndexedDB wrapper (package store, comments table)
-- [ ] Define shared types: Comment, FeedbackPackage, PageMetadata
-- [ ] Create base CSS for badges, sidebars, buttons
-- [ ] Build process, distribution, demo instance
+- [x] Set up project with TypeScript + Vite + ESLint/Prettier
+- [x] Create build process to produce a single-file JS plugin
+- [x] Implement IndexedDB wrapper (package store, comments table)
+- [x] Define shared types: Comment, FeedbackPackage, PageMetadata
+- [x] Create base CSS for badges, sidebars, buttons
+- [x] Build process, distribution, demo instance
 
 ---
 
 ## ✅ Phase 2: Capture Mode – Core Functionality
 
 ### Package Creation
-- [ ] Check if there is an active feedback package for this URL
-- [ ] If there is, show enabled BC icon. Load feedback package in background.
-- [ ] If there isn't, show disabled BC icon
-- [ ] Clicking on enabled BC icon opens capture feedback sidebar
-- [ ] Clicking on disabled BC icon opens package creation dialog, which takes document title, author name, and (editable) URL prefix, with instructions to navigate to root before creating feedback package. Store feedback package metadata in IndexedDB
+- [x] Check if there is an active feedback package for this URL
+- [x] If there is, show enabled BC icon. Load feedback package in background.
+- [x] If there isn't, show disabled BC icon
+- [x] Clicking on enabled BC icon opens capture feedback sidebar
+- [x] Clicking on disabled BC icon opens package creation dialog, which takes document title, author name, and (editable) URL prefix, with instructions to navigate to root before creating feedback package. Store feedback package metadata in IndexedDB
 - [ ] When capture sidebar is open, decorations on page show which elements have comment. Hovering over them shows the comment.
 
 ### Commenting
