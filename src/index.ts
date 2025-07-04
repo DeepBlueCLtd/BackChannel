@@ -113,6 +113,19 @@ function showBackChannelBadge(isEnabled: boolean): void {
  * Set up event listeners for component interactions
  */
 function setupComponentEventListeners(): void {
+  // Listen for the toggle-sidebar event
+  document.addEventListener('toggle-sidebar', () => {
+    console.log('Toggling sidebar')
+    // Get the sidebar element
+    const sidebar = document.querySelector('bc-sidebar') as HTMLElement & {
+      visible: boolean
+    }
+    if (sidebar) {
+      // Toggle the sidebar visibility
+      sidebar.visible = !sidebar.visible
+    }
+  })
+  
   // Listen for the open-sidebar event
   document.addEventListener('open-sidebar', () => {
     console.log('Opening sidebar')
@@ -299,9 +312,10 @@ function setupComponentEventListeners(): void {
           highlightedElement = null
         }
         
-        // Reset capture mode
+        // Reset capture mode and show the sidebar
         if (sidebar) {
           sidebar.captureMode = false
+          sidebar.visible = true
         }
       }
       

@@ -39,9 +39,9 @@ export class BackChannelBadge extends LitElement {
    */
   private _handleClick() {
     if (this.enabled) {
-      // If badge is enabled, open the sidebar
+      // If badge is enabled, toggle the sidebar
       this.dispatchEvent(
-        new CustomEvent('open-sidebar', {
+        new CustomEvent('toggle-sidebar', {
           bubbles: true,
           composed: true,
         })
