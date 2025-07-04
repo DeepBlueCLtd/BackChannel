@@ -233,6 +233,8 @@ function setupComponentEventListeners(): void {
             
             // Show the sidebar with the feedback form
             if (sidebar) {
+              // Make sure captureMode is still true when showing the sidebar
+              sidebar.captureMode = true
               sidebar.visible = true
               
               // Store the selected element information for when feedback is saved
