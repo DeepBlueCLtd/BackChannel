@@ -290,18 +290,6 @@ class DatabaseService {
       const normalizedCurrentUrl = DatabaseService._normalizeUrl(currentUrl)
       const normalizedCachedRootUrl = DatabaseService._normalizeUrl(cachedRootUrl || '')
 
-      console.log(
-        'checking cached URL',
-        currentUrl,
-        cachedRootUrl,
-        normalizedCurrentUrl,
-        normalizedCachedRootUrl,
-        cachedRootUrl &&
-          cachedPackage &&
-          (currentUrl.includes(cachedRootUrl) ||
-            normalizedCurrentUrl.includes(normalizedCachedRootUrl))
-      )
-
       if (
         cachedRootUrl &&
         cachedPackage &&

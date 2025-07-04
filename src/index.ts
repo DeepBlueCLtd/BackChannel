@@ -44,12 +44,10 @@ async function initBackChannel(): Promise<void> {
     // Check for fake database definitions and load them if available
     if (typeof window !== 'undefined' && (window as any).fakeData) {
       const fakeData = (window as any).fakeData as FakeDbJson[]
-      console.log('Fake database definitions detected:', fakeData)
 
       try {
         // Load fake databases from JSON definitions (await to ensure they're loaded before continuing)
         const fakeDatabases = await loadFakeDatabasesFromJson(fakeData)
-        console.log('Fake databases loaded:', fakeDatabases)
         // Initialize DatabaseService with fake databases
         DatabaseService.useFakeDatabases(fakeDatabases)
       } catch (error) {
@@ -58,9 +56,10 @@ async function initBackChannel(): Promise<void> {
     }
 
     // Check if there is an active feedback package for the current URL
-    console.log('checking for active feedback package', window.location.href)
     const activeFeedbackPackage: ActiveFeedbackPackage | null =
       await DatabaseService.getActiveFeedbackPackageForUrl(window.location.href)
+
+    console.log('checked for active feedback package:', !!activeFeedbackPackage)
 
     // Show the badge with appropriate state
     showBackChannelBadge(activeFeedbackPackage !== null)
@@ -94,8 +93,6 @@ function showBackChannelBadge(isEnabled: boolean): void {
 
   // Add to DOM
   document.body.appendChild(badge)
-
-  console.log(`BackChannel badge shown in ${isEnabled ? 'enabled' : 'disabled'} state`)
 
   // Create the sidebar and package dialog elements
   const sidebar = document.createElement('bc-sidebar') as HTMLElement & {
