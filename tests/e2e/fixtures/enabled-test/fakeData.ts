@@ -68,7 +68,4 @@ if (typeof window !== 'undefined') {
     enumerable: true,
     configurable: true,
   })
-
-  // Log that we've set the fake data
-  console.log('fakeData has been set on window object:', (window as any).fakeData)
 }

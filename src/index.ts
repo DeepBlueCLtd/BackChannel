@@ -46,8 +46,6 @@ async function initBackChannel(): Promise<void> {
       const fakeData = (window as any).fakeData as FakeDbStore
       try {
         // Load fake databases from JSON definitions (await to ensure they're loaded before continuing)
-        console.log('Loading fake databases from JSON definitions', fakeData)
-        // Seed the demo database if needed
         await seedDemoDatabaseIfNeeded(fakeData)
       } catch (error) {
         console.error('Error loading fake databases:', error)
@@ -58,20 +56,11 @@ async function initBackChannel(): Promise<void> {
     const activeFeedbackPackage: ActiveFeedbackPackage | null =
       await DatabaseService.getActiveFeedbackPackageForUrl(window.location.href)
 
-    console.log('checked for active feedback package:', !!activeFeedbackPackage)
-
     // Show the badge with appropriate state
     showBackChannelBadge(activeFeedbackPackage !== null)
 
     // Set up event listeners for component interactions
     setupComponentEventListeners()
-
-    console.log('BackChannel initialized successfully')
-    if (activeFeedbackPackage) {
-      console.log('Active feedback package found:', activeFeedbackPackage.packageData)
-    } else {
-      console.log('No active feedback package found for this URL')
-    }
   } catch (error) {
     console.error('Failed to initialize BackChannel:', error)
   }
@@ -113,27 +102,50 @@ function showBackChannelBadge(isEnabled: boolean): void {
  */
 function setupComponentEventListeners(): void {
   // Listen for the toggle-sidebar event
-  document.addEventListener('toggle-sidebar', () => {
+  document.addEventListener('toggle-sidebar', async () => {
     console.log('Toggling sidebar')
     // Get the sidebar element
     const sidebar = document.querySelector('bc-sidebar') as HTMLElement & {
       visible: boolean
+      comments: any[]
     }
     if (sidebar) {
       // Toggle the sidebar visibility
-      sidebar.visible = !sidebar.visible
-    }
-  })
+      const newVisibility = !sidebar.visible
+      sidebar.visible = newVisibility
+      // If opening the sidebar, load comments
+      if (newVisibility) {
+        try {
+          // Get the active feedback package
+          const activeFeedbackPackage = await DatabaseService.getActiveFeedbackPackageForUrl(
+            window.location.href
+          )
 
-  // Listen for the open-sidebar event
-  document.addEventListener('open-sidebar', () => {
-    console.log('Opening sidebar')
-    // Get the sidebar element
-    const sidebar = document.querySelector('bc-sidebar') as HTMLElement & {
-      visible: boolean
-    }
-    if (sidebar) {
-      sidebar.visible = true
+          console.log(
+            'Active feedback package:',
+            !!activeFeedbackPackage,
+            activeFeedbackPackage?.dbId
+          )
+
+          if (activeFeedbackPackage) {
+            // Create a database service instance for the active package
+            const dbService = new DatabaseService(activeFeedbackPackage.dbId)
+            await dbService.init()
+
+            // Get all comments
+            const allComments = await dbService.getAllComments()
+            console.log('Loaded comments from database:', allComments)
+
+            // Filter comments for this page
+            const comments =
+              allComments?.filter(comment => comment.pageUrl === window.location.pathname) || []
+            // Update the sidebar with the comments
+            sidebar.comments = comments
+          }
+        } catch (error) {
+          console.error('Error loading comments:', error)
+        }
+      }
     }
   })
 

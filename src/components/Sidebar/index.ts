@@ -38,7 +38,7 @@ export class BackChannelSidebar extends LitElement {
         this._hideElementDecorations()
       }
     }
-    
+
     // Also respond to changes in the comments array
     if (changedProperties.has('comments')) {
       if (this.visible && this.comments && this.comments.length > 0) {
@@ -128,7 +128,7 @@ export class BackChannelSidebar extends LitElement {
 
     // Remove any existing decorations first
     this._hideElementDecorations()
-    
+
     // Add CSS styles for comment decorations
     const styleId = 'bc-comment-styles'
     if (!document.getElementById(styleId)) {
