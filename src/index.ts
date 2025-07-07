@@ -24,9 +24,10 @@ declare global {
     'export-feedback': Event
   }
 }
-import { type FakeDbJson } from './helpers/fakeDb'
+import { seedDemoDatabaseIfNeeded, type DemoDatabaseSeed } from './helpers/demoSeeder'
 import { DatabaseService } from './services/db'
 import type { ActiveFeedbackPackage } from './types'
+
 
 // Wait for the DOM to be fully loaded before initializing
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,12 +44,12 @@ async function initBackChannel(): Promise<void> {
   try {
     // Check for fake database definitions and load them if available
     if (typeof window !== 'undefined' && (window as any).fakeData) {
-      const fakeData = (window as any).fakeData as FakeDbJson[]
+      const fakeData = (window as any).fakeData as DemoDatabaseSeed
       try {
         // Load fake databases from JSON definitions (await to ensure they're loaded before continuing)
         console.log('Loading fake databases from JSON definitions', fakeData)
-        // TODO: implement method called in next line.
-        // seedDemoDatabaseIfNeeded(fakeData)
+        // Seed the demo database if needed
+        await seedDemoDatabaseIfNeeded(fakeData)
       } catch (error) {
         console.error('Error loading fake databases:', error)
       }

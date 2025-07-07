@@ -41,8 +41,13 @@ export interface FakedbCommentsStore {
 
 export interface FakeDbJson {
   name: string
-  version: number
+  version: number // application / schema version
   objectStores: [FakedbPackageStore, FakedbCommentsStore]
+}
+
+export interface FakeDbStore {
+  version: number // data version
+  databases: FakeDbJson[]
 }
 
 /**
@@ -52,49 +57,52 @@ export interface FakeDbJson {
  * - version: The version of the database
  * - objectStores: Array of object stores with their data
  */
-export const fakeData: FakeDbJson[] = [
-  {
-    name: 'bc-storage-enabled',
-    version: 1,
-    objectStores: [
-      {
-        name: 'packages',
-        keyPath: 'id',
-        data: [
-          {
-            id: 'pkg-1234567890',
-            name: 'Enabled Test Package',
-            rootURL: 'http://localhost:5173/tests/e2e/fixtures/enabled-test/enabled',
-            version: '1.0.0',
-            author: 'Test Author 1',
-          },
-        ],
-      },
-      {
-        name: 'comments',
-        keyPath: 'timestamp',
-        data: [
-          {
-            feedback: 'This is a test comment for the enabled fixture',
-            xpath: 'body > h1',
-            elementText: 'Enabled Test Package',
-            pageUrl: 'enabled/index.html',
-            documentTitle: 'Enabled Page',
-            timestamp: Date.now(),
-          },
-          {
-            feedback: 'Another test comment for the enabled fixture',
-            xpath: 'body > p',
-            elementText: 'Enabled Test Package',
-            pageUrl: 'enabled/subdir/index.html',
-            documentTitle: 'Enabled Subdirectory Page',
-            timestamp: Date.now() - 86400000, // 1 day ago
-          },
-        ],
-      },
-    ],
-  },
-]
+export const fakeData: FakeDbStore = {
+  version: 1,
+  databases: [
+    {
+      name: 'bc-storage-enabled',
+      version: 1,
+      objectStores: [
+        {
+          name: 'packages',
+          keyPath: 'id',
+          data: [
+            {
+              id: 'pkg-1234567890',
+              name: 'Enabled Test Package',
+              rootURL: 'http://localhost:5173/tests/e2e/fixtures/enabled-test/enabled',
+              version: '1.0.0',
+              author: 'Test Author 1',
+            },
+          ],
+        },
+        {
+          name: 'comments',
+          keyPath: 'timestamp',
+          data: [
+            {
+              feedback: 'This is a test comment for the enabled fixture',
+              xpath: 'body > h1',
+              elementText: 'Enabled Test Package',
+              pageUrl: 'enabled/index.html',
+              documentTitle: 'Enabled Page',
+              timestamp: Date.now(),
+            },
+            {
+              feedback: 'Another test comment for the enabled fixture',
+              xpath: 'body > p',
+              elementText: 'Enabled Test Package',
+              pageUrl: 'enabled/subdir/index.html',
+              documentTitle: 'Enabled Subdirectory Page',
+              timestamp: Date.now() - 86400000, // 1 day ago
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
 
 // Make fakeData available on the window object
 if (typeof window !== 'undefined') {

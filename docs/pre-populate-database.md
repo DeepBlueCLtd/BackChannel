@@ -21,7 +21,7 @@ There is a sample database object already in `tests/e2e/fixtures/enabled-test/fa
 ## 🔨 Sub-tasks
 
 ### 1. Understand requirement
-- [ ] Remove concept of Fake-Databases from DatabaseService (db.ts).
+- [x] Remove concept of Fake-Databases from DatabaseService (db.ts).
 
 ### 2. Create the Seeding Utility
 - [ ] Write a utility function (e.g. `seedDemoDatabaseIfNeeded()`) that:

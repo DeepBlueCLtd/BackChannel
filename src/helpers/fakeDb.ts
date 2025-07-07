@@ -18,8 +18,13 @@ export interface FakeDbObjectStore {
 
 export interface FakeDbJson {
   name: string
-  version: number
+  version: number // application/schema version
   objectStores: FakeDbObjectStore[]
+}
+
+export interface FakeDbStore {
+  version: number // data version
+  databases: FakeDbJson[]
 }
 
 /**
