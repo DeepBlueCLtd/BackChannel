@@ -42,4 +42,21 @@ export interface ActiveFeedbackPackage {
   packageData: Package
 }
 
+/** support for seeding databases */
+export interface FakeDbObjectStore {
+  name: string
+  keyPath: string
+  data: any[]
+}
+
+export interface FakeDbJson {
+  name: string
+  version: number // application/schema version
+  objectStores: FakeDbObjectStore[]
+}
+
+export interface FakeDbStore {
+  version: number // data version
+  databases: FakeDbJson[]
+}
 // No need for global IndexedDB declarations as they're provided by the DOM lib

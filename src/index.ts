@@ -24,10 +24,9 @@ declare global {
     'export-feedback': Event
   }
 }
-import { seedDemoDatabaseIfNeeded, type DemoDatabaseSeed } from './helpers/demoSeeder'
+import { seedDemoDatabaseIfNeeded } from './helpers/demoSeeder'
 import { DatabaseService } from './services/db'
-import type { ActiveFeedbackPackage } from './types'
-
+import type { ActiveFeedbackPackage, FakeDbStore } from './types'
 
 // Wait for the DOM to be fully loaded before initializing
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,7 +43,7 @@ async function initBackChannel(): Promise<void> {
   try {
     // Check for fake database definitions and load them if available
     if (typeof window !== 'undefined' && (window as any).fakeData) {
-      const fakeData = (window as any).fakeData as DemoDatabaseSeed
+      const fakeData = (window as any).fakeData as FakeDbStore
       try {
         // Load fake databases from JSON definitions (await to ensure they're loaded before continuing)
         console.log('Loading fake databases from JSON definitions', fakeData)

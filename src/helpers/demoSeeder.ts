@@ -3,13 +3,7 @@
  * Utility for seeding demo IndexedDB data with version control
  */
 
-import type { FakeDbJson } from './fakeDb'
-
-// Define the structure for the demo database seed
-export interface DemoDatabaseSeed {
-  version: string
-  databases: FakeDbJson[]
-}
+import type { FakeDbJson, FakeDbStore } from '../types'
 
 // Local storage key for tracking seed versions
 const SEED_VERSION_KEY = 'bc-demo-seed-version'
@@ -21,7 +15,7 @@ const SEED_VERSION_KEY = 'bc-demo-seed-version'
  * @returns Promise resolving to whether seeding was performed
  */
 export async function seedDemoDatabaseIfNeeded(
-  seedData: DemoDatabaseSeed,
+  seedData: FakeDbStore,
   forceReseed = false
 ): Promise<boolean> {
   // Check if localStorage is available
@@ -135,41 +129,4 @@ async function seedDatabase(dbDef: FakeDbJson): Promise<void> {
       reject(error)
     }
   })
-}
-
-/**
- * Clears all seeded demo databases
- * @param seedData - The seed data containing database definitions
- * @returns Promise resolving to whether clearing was successful
- */
-export async function clearDemoDatabases(
-  seedData: FakeDbJson[] | DemoDatabaseSeed
-): Promise<boolean> {
-  try {
-    // Handle both legacy format and new format
-    const databases = Array.isArray(seedData) ? seedData : seedData.databases
-
-    // Delete each database
-    for (const dbDef of databases) {
-      await new Promise<void>((resolve, reject) => {
-        const request = window.indexedDB.deleteDatabase(dbDef.name)
-        request.onsuccess = () => {
-          console.log(`Database ${dbDef.name} deleted successfully`)
-          resolve()
-        }
-        request.onerror = (event: any) => {
-          console.error(`Error deleting database ${dbDef.name}:`, event.target.error)
-          reject(event.target.error)
-        }
-      })
-    }
-
-    // Clear the seed version from localStorage
-    localStorage.removeItem(SEED_VERSION_KEY)
-    console.log('Demo databases cleared successfully')
-    return true
-  } catch (error) {
-    console.error('Error clearing demo databases:', error)
-    return false
-  }
 }

@@ -5,27 +5,10 @@
 
 // Import fake-indexeddb for creating in-memory databases
 import { IDBFactory } from 'fake-indexeddb'
+import type { FakeDbJson } from '../types'
 
 // Define IDBDatabase type for use in our functions
 type IDBDatabase = any
-
-// Import types
-export interface FakeDbObjectStore {
-  name: string
-  keyPath: string
-  data: any[]
-}
-
-export interface FakeDbJson {
-  name: string
-  version: number // application/schema version
-  objectStores: FakeDbObjectStore[]
-}
-
-export interface FakeDbStore {
-  version: number // data version
-  databases: FakeDbJson[]
-}
 
 /**
  * Converts JSON database definitions into populated IDBDatabase objects

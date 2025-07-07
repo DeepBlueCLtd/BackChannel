@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import type { Comment, Package } from '../../e2e/fixtures/enabled-test/fakeData'
+import type { Comment, Package } from '../../../src/types'
 
 describe('Shared Types', () => {
   describe('Comment', () => {
