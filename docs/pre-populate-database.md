@@ -6,17 +6,17 @@ Ensure that demo pages load persistent IndexedDB data **only once per version**,
 
 ## 🎯 Expected Outcomes
 
-- A block of JSON embedded in each demo page (via `window.demoDatabaseSeed`) defines:
+- An optional block of JSON embedded in demo pages (via `window.demoDatabaseSeed`) defines:
   - A version string (e.g. `demo-v2`)
   - One or more IndexedDB database definitions
 - On initial page load:
-  - If the seed version has **not yet been applied**, the real browser IndexedDB is populated with the defined data.
+  - If the seed version is **not yet present in indexedDb**, the browser IndexedDB is populated with the defined data.
   - If the seed version **has already been applied**, no changes are made.
 - User-added data (e.g. comments) persists across page navigations.
 
 ## 📁 Demo JSON Format
 
-There is a sample database object already in `FakeData.ts`.
+There is a sample database object already in `tests/e2e/fixtures/enabled-test/fakeData.ts`, which successfully injects the mock data into `window.fakeData`.
 
 ## 🔨 Sub-tasks
 
@@ -33,6 +33,7 @@ There is a sample database object already in `FakeData.ts`.
 - [ ] Call `seedDemoDatabaseIfNeeded()` in a `src/index.ts` before initialising DatabaseService
 
 ### 4. Test and Validate
+- [ ] Establish that no indexedDb databases present (ask human to verify)
 - [ ] Load demo page and confirm database is seeded once
 - [ ] Add new data (e.g. comments), navigate away, and confirm persistence
 - [ ] Change `window.demoDatabaseSeed.version` and verify that the seeding re-runs and overwrites previous contents
