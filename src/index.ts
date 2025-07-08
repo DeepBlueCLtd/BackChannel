@@ -136,11 +136,8 @@ function setupComponentEventListeners(): void {
             const allComments = await dbService.getAllComments()
             console.log('Loaded comments from database:', allComments)
 
-            // Filter comments for this page
-            const comments =
-              allComments?.filter(comment => comment.pageUrl === window.location.pathname) || []
-            // Update the sidebar with the comments
-            sidebar.comments = comments
+            // Pass all comments to the sidebar - filtering will be handled by the sidebar component
+            sidebar.comments = allComments || []
           }
         } catch (error) {
           console.error('Error loading comments:', error)

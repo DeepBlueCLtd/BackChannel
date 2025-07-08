@@ -24,6 +24,7 @@ export class BackChannelSidebar extends LitElement {
       visible: { type: Boolean, reflect: true },
       captureMode: { type: Boolean, reflect: true },
       comments: { type: Array },
+      thisPageOnly: { type: Boolean, reflect: true },
     }
   }
 
@@ -51,10 +52,12 @@ export class BackChannelSidebar extends LitElement {
   declare visible: boolean
   declare captureMode: boolean
   declare comments: any[]
+  declare thisPageOnly: boolean
 
   constructor() {
     super()
     this.comments = []
+    this.thisPageOnly = true // Default to showing only current page comments
   }
 
   // Private state
@@ -94,11 +97,32 @@ export class BackChannelSidebar extends LitElement {
   }
 
   /**
-   * Handle feedback input changes
+   * Handle input in the feedback textarea
    */
-  private _handleFeedbackInput(e: Event) {
-    const target = e.target as HTMLTextAreaElement
-    this._currentFeedback = target.value
+  private _handleFeedbackInput(event: Event) {
+    this._currentFeedback = (event.target as HTMLTextAreaElement).value
+  }
+
+  /**
+   * Handle toggle of page filter
+   */
+  private _handleTogglePageFilter() {
+    this.thisPageOnly = !this.thisPageOnly
+  }
+
+  /**
+   * Filter comments based on the thisPageOnly setting
+   */
+  private _getFilteredComments() {
+    if (!this.comments) return []
+
+    // If thisPageOnly is true, filter comments for current page only
+    if (this.thisPageOnly) {
+      return this.comments.filter(comment => comment.pageUrl === window.location.pathname)
+    }
+
+    // Otherwise return all comments
+    return this.comments
   }
 
   /**
@@ -335,6 +359,24 @@ export class BackChannelSidebar extends LitElement {
       margin-top: 20px;
     }
 
+    .comments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .page-filter {
+      font-size: 14px;
+    }
+
+    .page-filter label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
     .comment-item {
       padding: 10px;
       margin-bottom: 10px;
@@ -384,10 +426,22 @@ export class BackChannelSidebar extends LitElement {
           : ''}
 
         <div class="comments-list">
-          <h3>Comments</h3>
+          <div class="comments-header">
+            <h3>Comments</h3>
+            <div class="page-filter">
+              <label>
+                <input
+                  type="checkbox"
+                  ?checked=${this.thisPageOnly}
+                  @change=${this._handleTogglePageFilter}
+                />
+                This page only
+              </label>
+            </div>
+          </div>
           ${this.comments.length === 0
             ? html`<p>No comments yet.</p>`
-            : this.comments.map(
+            : this._getFilteredComments().map(
                 (comment: any) => html`
                   <div class="comment-item">
                     <div class="comment-text">${comment.feedback}</div>
