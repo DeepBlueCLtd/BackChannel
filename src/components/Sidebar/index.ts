@@ -25,6 +25,7 @@ export class BackChannelSidebar extends LitElement {
       captureMode: { type: Boolean, reflect: true },
       comments: { type: Array },
       thisPageOnly: { type: Boolean, reflect: true },
+      selectedCommentTimestamp: { type: Number },
     }
   }
 
@@ -53,11 +54,13 @@ export class BackChannelSidebar extends LitElement {
   declare captureMode: boolean
   declare comments: any[]
   declare thisPageOnly: boolean
+  declare selectedCommentTimestamp: number | null
 
   constructor() {
     super()
     this.comments = []
     this.thisPageOnly = true // Default to showing only current page comments
+    this.selectedCommentTimestamp = null
   }
 
   // Private state
@@ -145,6 +148,63 @@ export class BackChannelSidebar extends LitElement {
   }
 
   /**
+   * Handle clicking on a comment in the sidebar
+   */
+  private _handleCommentClick(timestamp: number) {
+    // If clicking the same comment again, deselect it
+    if (this.selectedCommentTimestamp === timestamp) {
+      this.selectedCommentTimestamp = null
+      this._clearSelectedStyling()
+      return
+    }
+
+    // Set the selected comment timestamp
+    this.selectedCommentTimestamp = timestamp
+
+    // Find the comment by timestamp
+    const comment = this.comments.find(c => c.timestamp === timestamp)
+    if (!comment) return
+
+    // Clear any previous selection styling
+    this._clearSelectedStyling()
+
+    try {
+      // Find the element using the stored XPath
+      const element = document.evaluate(
+        comment.xpath,
+        document,
+        null,
+        window.XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null
+      ).singleNodeValue as HTMLElement
+
+      if (element) {
+        // Add selected styling
+        element.classList.add('bc-selected-comment')
+        
+        // Scroll the element into view
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    } catch (error) {
+      console.error('Error finding element for selected comment:', error)
+    }
+  }
+
+  /**
+   * Clear selected comment styling
+   */
+  private _clearSelectedStyling() {
+    // Find all elements with our selected class
+    const selectedElements = document.querySelectorAll('.bc-selected-comment')
+
+    // Remove selected styling
+    selectedElements.forEach(element => {
+      const htmlElement = element as HTMLElement
+      htmlElement.classList.remove('bc-selected-comment')
+    })
+  }
+
+  /**
    * Show decorations on elements that have comments
    */
   private _showElementDecorations() {
@@ -163,6 +223,11 @@ export class BackChannelSidebar extends LitElement {
           outline: 2px solid #4285f4; 
           position: relative; 
         } 
+        .bc-selected-comment {
+          outline: 4px solid #ff5722 !important;
+          background-color: rgba(255, 87, 34, 0.1);
+          position: relative;
+        }
         .bc-comment-tooltip { 
           position: absolute; 
           background: #333; 
@@ -222,6 +287,9 @@ export class BackChannelSidebar extends LitElement {
       htmlElement.removeEventListener('mouseenter', this._showCommentTooltip.bind(this))
       htmlElement.removeEventListener('mouseleave', this._hideCommentTooltip.bind(this))
     })
+    
+    // Also clear any selected styling
+    this._clearSelectedStyling()
 
     // Remove any tooltips that might be visible
     const tooltips = document.querySelectorAll('.bc-comment-tooltip')
@@ -383,6 +451,18 @@ export class BackChannelSidebar extends LitElement {
       background-color: #f9f9f9;
       border-radius: 4px;
       border-left: 3px solid #0066cc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .comment-item:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .comment-item-selected {
+      background-color: #e3f2fd;
+      border-left: 3px solid #ff5722;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .comment-text {
@@ -443,7 +523,11 @@ export class BackChannelSidebar extends LitElement {
             ? html`<p>No comments yet.</p>`
             : this._getFilteredComments().map(
                 (comment: any) => html`
-                  <div class="comment-item">
+                  <div
+                    class="comment-item ${comment.timestamp === this.selectedCommentTimestamp
+                      ? 'comment-item-selected'
+                      : ''}"
+                    @click=${() => this._handleCommentClick(comment.timestamp)}>
                     <div class="comment-text">${comment.feedback}</div>
                     <div class="comment-meta">
                       ${comment.elementText ? html`<div>Element: ${comment.elementText}</div>` : ''}
