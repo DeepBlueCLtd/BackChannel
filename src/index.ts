@@ -26,7 +26,7 @@ declare global {
 }
 import { seedDemoDatabaseIfNeeded } from './helpers/demoSeeder'
 import { DatabaseService } from './services/db'
-import type { ActiveFeedbackPackage, FakeDbStore } from './types'
+import type { ActiveFeedbackPackage, FakeDbStore, Package } from './types'
 
 // Wait for the DOM to be fully loaded before initializing
 document.addEventListener('DOMContentLoaded', () => {
@@ -449,27 +449,20 @@ function setupComponentEventListeners(): void {
       console.log('Creating package', event.detail)
 
       try {
-        // Extract details from the event
-        const { title, author, urlPrefix } = event.detail
-
-        // Construct the root URL by combining the current origin with the URL prefix
-        const origin = window.location.origin
-        const rootURL = `${origin}/${urlPrefix}`
-
-        // Create a package object
-        const packageData = {
-          id: `bc-pkg-${Date.now()}`, // Add ID to package data
+        const rootURL = event.detail.urlPrefix
+        const title = event.detail.title
+        const author = event.detail.author
+        // Create a new package object
+        const packageData: Package = {
           name: title,
-          version: '1.0.0', // Version of BackChannel library
+          version: '1.0.0', // Hardcoded version for now
           author,
           rootURL,
         }
 
-        // Generate a database ID based on the title
-        const dbService = new DatabaseService(title)
+        // Create a new database service with the document title as the database name
+        const dbService = new DatabaseService(event.detail.title, packageData)
         await dbService.init()
-
-        // ID is already added when creating the package object
 
         // Save the package to IndexedDB
         await dbService.updatePackage(packageData)
