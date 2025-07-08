@@ -34,7 +34,7 @@ This document breaks down the full implementation of BackChannel, covering both 
 - [x] Save comment to `comments` table with metadata
 - [x] Render comment badge on target element
 - [x] List current page comments in sidebar
-- [ ] Clicking on a comment 
+- [ ] Clicking on a comment should navigate to the page, and highlight the comment on that page.
 
 ### Navigation
 - [ ] Detect feedback package match on hyperlinked documents, show decoration when comments availble for that document.
